@@ -37,4 +37,7 @@ out/
 .vscode/
 
 .env
-
+dev.md
+req.md
+cur.md
+/login-app/node_modules

@@ -1,15 +1,9 @@
 package com.wsd.blogapi.user;
 
-
 import jakarta.persistence.*;
-import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
 @Entity
 @Table(name = "users")
 public class User {
@@ -20,7 +14,6 @@ public class User {
     @Column(unique = true)
     private String email;
 
-    @Column(name = "password_hash")
     private String passwordHash;
 
     @Column(nullable = false, length = 50)
@@ -31,17 +24,47 @@ public class User {
     private UserRole role;
 
     @Column(nullable = false, length = 20)
-    private String status; // ACTIVE/SUSPENDED (단순 문자열로 시작)
+    private String status; // ACTIVE / SUSPENDED
 
     @Column(nullable = false, length = 20)
-    private String provider; // LOCAL/GOOGLE/FIREBASE
+    private String provider; // LOCAL / GOOGLE / FIREBASE
 
-    @Column(name = "provider_id", length = 255)
     private String providerId;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    protected User() {}
+
+    public User(String email, String passwordHash, String nickname, UserRole role, String status, String provider, String providerId) {
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.nickname = nickname;
+        this.role = role;
+        this.status = status;
+        this.provider = provider;
+        this.providerId = providerId;
+    }
+
+    @PrePersist
+    void prePersist() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public Long getId() { return id; }
+    public String getEmail() { return email; }
+    public String getPasswordHash() { return passwordHash; }
+    public String getNickname() { return nickname; }
+    public UserRole getRole() { return role; }
+    public String getStatus() { return status; }
+    public String getProvider() { return provider; }
+    public String getProviderId() { return providerId; }
+
+    public boolean isActive() { return "ACTIVE".equalsIgnoreCase(status); }
 }
