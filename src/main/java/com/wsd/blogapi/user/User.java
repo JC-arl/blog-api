@@ -67,4 +67,24 @@ public class User {
     public String getProviderId() { return providerId; }
 
     public boolean isActive() { return "ACTIVE".equalsIgnoreCase(status); }
+
+    // Business methods
+    public void suspend() {
+        this.status = "SUSPENDED";
+    }
+
+    public void activate() {
+        this.status = "ACTIVE";
+    }
+
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void updateRole(UserRole role) {
+        this.role = role;
+    }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 }
