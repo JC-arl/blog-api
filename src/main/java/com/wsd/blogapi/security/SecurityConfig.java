@@ -1,7 +1,6 @@
 package com.wsd.blogapi.security;
 
-import com.wsd.blogapi.oauth.OAuth2SuccessHandler;
-import com.wsd.blogapi.oauth.OAuth2UserService;
+import com.wsd.blogapi.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.*;
 import org.springframework.security.authentication.*;
@@ -18,8 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
-    private final OAuth2UserService oAuth2UserService;
-    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final UserRepository userRepository;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -39,17 +37,11 @@ public class SecurityConfig {
                                 "/health",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/auth/**",
-                                "/login/oauth2/code/**"
+                                "/auth/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(oAuth2UserService)
-                        )
-                        .successHandler(oAuth2SuccessHandler)
-                )
+                .addFilterBefore(new FirebaseAuthFilter(userRepository), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new JwtAuthFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
