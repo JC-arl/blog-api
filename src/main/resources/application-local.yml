@@ -1,5 +1,10 @@
 server:
   port: ${APP_PORT:8080}
+  # HTTP 헤더 크기 제한 (기본값: 8KB)
+  max-http-header-size: 8KB
+  # Tomcat 설정
+  tomcat:
+    max-http-form-post-size: 2MB  # POST 요청 본문 크기 제한
 
 app:
   jwt:
@@ -43,3 +48,32 @@ firebase:
 # Kakao 설정
 kakao:
   rest-api-key: ${KAKAO_REST_API_KEY}
+
+# Swagger UI 설정
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+    display-request-duration: true
+    doc-expansion: none
+    disable-swagger-default-url: true
+    try-it-out-enabled: true
+
+# 로깅 설정
+logging:
+  level:
+    root: INFO
+    com.wsd.blogapi: DEBUG
+    com.wsd.blogapi.common.logging: INFO
+    com.wsd.blogapi.common.error: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%t] %-40.40logger{39} : %m%n%wEx"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%t] %-40.40logger{39} : %m%n%wEx"
