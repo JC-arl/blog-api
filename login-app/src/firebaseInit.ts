@@ -16,6 +16,11 @@ const firebaseApp = initializeApp(firebaseConfig);
 export const auth = getAuth(firebaseApp);
 export const googleProvider = new GoogleAuthProvider();
 
+// 항상 계정 선택 화면 표시
+googleProvider.setCustomParameters({
+    prompt: 'select_account'
+});
+
 // Google 로그인
 export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
 
