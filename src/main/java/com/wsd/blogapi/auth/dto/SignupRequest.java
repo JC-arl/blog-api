@@ -18,6 +18,16 @@ public class SignupRequest {
     @Size(min = 2, max = 50, message = "닉네임은 2~50자여야 합니다.")
     private String nickname;
 
+    // 기본 생성자
+    public SignupRequest() {}
+
+    // 테스트용 생성자
+    public SignupRequest(String email, String password, String nickname) {
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+    }
+
     public String getEmail() {
         return email;
     }
