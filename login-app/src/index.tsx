@@ -2,17 +2,24 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import KakaoCallback from './KakaoCallback';
 import reportWebVitals from './reportWebVitals';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 
-
+// 간단한 라우팅
+const CurrentPage = () => {
+  if (window.location.pathname === '/oauth/kakao/callback') {
+    return <KakaoCallback />;
+  }
+  return <App />;
+};
 
 root.render(
   <React.StrictMode>
-    <App />
+    <CurrentPage />
   </React.StrictMode>
 );
 

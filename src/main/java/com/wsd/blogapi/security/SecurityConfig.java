@@ -24,6 +24,12 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .headers(headers -> headers
+                        .addHeaderWriter((request, response) -> {
+                            response.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+                            response.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+                        })
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
@@ -37,7 +43,8 @@ public class SecurityConfig {
                                 "/health",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/auth/**"
+                                "/auth/**",
+                                "/oauth/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
