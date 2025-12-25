@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.9'
+    id 'org.springframework.boot' version '3.4.1'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -33,7 +33,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-admin:9.4.2'
 
     // Swagger
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
     // JWT (jjwt) - 자체 JWT 토큰 발급용 (선택사항)
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
@@ -53,6 +53,11 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// Spring Boot Build Info 생성 (buildTime 자동 생성)
+springBoot {
+    buildInfo()
 }
 
 // React 빌드 디렉토리 정의
