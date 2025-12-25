@@ -1,16 +1,24 @@
 package com.wsd.blogapi.post;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wsd.blogapi.category.Category;
+import com.wsd.blogapi.category.CategoryRepository;
 import com.wsd.blogapi.post.dto.CreatePostRequest;
 import com.wsd.blogapi.post.dto.UpdatePostRequest;
 import com.wsd.blogapi.security.JwtProvider;
+import com.wsd.blogapi.security.TestSecurityConfig;
+import com.wsd.blogapi.user.User;
+import com.wsd.blogapi.user.UserRepository;
+import com.wsd.blogapi.user.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Import(TestSecurityConfig.class)
 @Transactional
 class PostControllerTest {
 
@@ -33,12 +42,39 @@ class PostControllerTest {
     @Autowired
     private JwtProvider jwtProvider;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     private String accessToken;
+    private User testUser;
+    private Category testCategory;
 
     @BeforeEach
     void setUp() {
-        // 테스트용 토큰 생성 (userId=1, ROLE_USER)
-        accessToken = jwtProvider.createAccessToken(1L, "ROLE_USER");
+        // 테스트용 사용자 생성
+        testUser = new User(
+                "test@example.com",
+                passwordEncoder.encode("password123"),
+                "테스트유저",
+                UserRole.ROLE_USER,
+                "ACTIVE",
+                "LOCAL",
+                null
+        );
+        testUser = userRepository.save(testUser);
+
+        // 테스트용 카테고리 생성
+        testCategory = new Category("테스트카테고리", "test-category", "테스트용 카테고리입니다");
+        testCategory = categoryRepository.save(testCategory);
+
+        // 테스트용 토큰 생성
+        accessToken = jwtProvider.createAccessToken(testUser.getId(), "ROLE_USER");
     }
 
     @Test
@@ -47,7 +83,7 @@ class PostControllerTest {
         CreatePostRequest request = new CreatePostRequest(
                 "테스트 게시글 제목",
                 "테스트 게시글 내용입니다.",
-                1L,
+                testCategory.getId(),
                 "PUBLISHED"
         );
 
@@ -58,7 +94,7 @@ class PostControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title").value("테스트 게시글 제목"))
                 .andExpect(jsonPath("$.content").value("테스트 게시글 내용입니다."))
-                .andExpect(jsonPath("$.authorId").value(1));
+                .andExpect(jsonPath("$.authorId").value(testUser.getId()));
     }
 
     @Test
@@ -77,9 +113,26 @@ class PostControllerTest {
     @Test
     @DisplayName("게시글 상세 조회 성공")
     void getPostSuccess() throws Exception {
-        // 시드 데이터에 있는 게시글 ID 사용
-        Long postId = 1L;
+        // 먼저 게시글 생성
+        CreatePostRequest createRequest = new CreatePostRequest(
+                "조회할 게시글",
+                "조회할 내용",
+                testCategory.getId(),
+                "PUBLISHED"
+        );
 
+        String createResponse = mockMvc.perform(post("/posts")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Long postId = objectMapper.readTree(createResponse).get("id").asLong();
+
+        // 게시글 상세 조회
         mockMvc.perform(get("/posts/{id}", postId)
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
@@ -96,7 +149,7 @@ class PostControllerTest {
         CreatePostRequest createRequest = new CreatePostRequest(
                 "원본 제목",
                 "원본 내용",
-                1L,
+                testCategory.getId(),
                 "PUBLISHED"
         );
 
@@ -115,7 +168,7 @@ class PostControllerTest {
         UpdatePostRequest updateRequest = new UpdatePostRequest(
                 "수정된 제목",
                 "수정된 내용",
-                1L,
+                testCategory.getId(),
                 "PUBLISHED"
         );
 
@@ -135,7 +188,7 @@ class PostControllerTest {
         CreatePostRequest createRequest = new CreatePostRequest(
                 "삭제할 게시글",
                 "삭제될 내용",
-                1L,
+                testCategory.getId(),
                 "PUBLISHED"
         );
 
