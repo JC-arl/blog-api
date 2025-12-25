@@ -52,6 +52,44 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+// React 빌드 디렉토리 정의
+def reactDir = file("${projectDir}/login-app")
+def reactBuildDir = file("${reactDir}/build")
+def staticDir = file("${projectDir}/src/main/resources/static")
+
+// npm 설치 task
+task npmInstall(type: Exec) {
+    workingDir reactDir
+    inputs.file("${reactDir}/package.json")
+    outputs.dir("${reactDir}/node_modules")
+
+    commandLine = System.getProperty('os.name').toLowerCase().contains('windows')
+        ? ['cmd', '/c', 'npm', 'install']
+        : ['npm', 'install']
+}
+
+// React 빌드 task
+task buildReact(type: Exec, dependsOn: npmInstall) {
+    workingDir reactDir
+    inputs.dir(reactDir)
+    outputs.dir(reactBuildDir)
+
+    commandLine = System.getProperty('os.name').toLowerCase().contains('windows')
+        ? ['cmd', '/c', 'npm', 'run', 'build']
+        : ['npm', 'run', 'build']
+}
+
+// React 빌드 결과물을 static 폴더로 복사
+task copyReactBuild(type: Copy, dependsOn: buildReact) {
+    from reactBuildDir
+    into staticDir
+}
+
+// processResources에 copyReactBuild 의존성 추가
+tasks.named('processResources') {
+    dependsOn copyReactBuild
+}
+
 tasks.named('bootRun') {
     def envFile = file('.env')
     if (envFile.exists()) {

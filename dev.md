@@ -12,18 +12,18 @@ Spring Boot + MySQL 기반으로 REST API 서버를 구축하며,
 
 ## 1. 기술 스택
 
-| 구분 | 기술 |
-|---|---|
-| Language | Java 17 |
-| Framework | Spring Boot 3.x |
-| ORM | Spring Data JPA (Hibernate) |
-| DB | MySQL 8 |
-| Cache / Infra | Redis |
+| 구분 | 기술                                                   |
+|---|------------------------------------------------------|
+| Language | Java 21                                              |
+| Framework | Spring Boot 3.5.9                                    |
+| ORM | Spring Data JPA (Hibernate)                          |
+| DB | MySQL 8                                              |
+| Cache / Infra | Redis                                                |
 | Auth | JWT, OAuth2 (Google/Kakao/Naver 중 택1), Firebase Auth |
-| Docs | Swagger(OpenAPI 3), Postman |
-| Container | Docker, docker-compose |
-| Deploy | JCloud (VM 기반) |
-| Test | JUnit5, MockMvc |
+| Docs | Swagger(OpenAPI 3), Postman                          |
+| Container | Docker, docker-compose                               |
+| Deploy | JCloud (VM 기반)                                       |
+| Test | JUnit5, MockMvc                                      |
 
 ---
 

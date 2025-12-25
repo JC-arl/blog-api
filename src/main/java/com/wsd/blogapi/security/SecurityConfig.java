@@ -28,6 +28,14 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/static/**",
+                                "/favicon.ico",
+                                "/manifest.json",
+                                "/logo*.png",
+                                "/robots.txt",
+                                "/asset-manifest.json",
                                 "/health",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
