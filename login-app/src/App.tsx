@@ -1,7 +1,8 @@
 import React, {useState, useEffect} from "react";
 import "./login.css";
-import { auth, signInWithGoogle, firebaseSignOut } from "./firebaseConfig";
-import { onAuthStateChanged } from "firebase/auth";
+import { auth, signInWithGoogle, firebaseSignOut } from "./firebaseInit";
+import { onAuthStateChanged, signInWithCustomToken } from "firebase/auth";
+import { initKakao, kakaoLogin, kakaoLogout } from "./kakaoConfig";
 
 // 개발 모드에서는 포트 8080, 프로덕션에서는 같은 origin 사용
 const API_BASE_URL = process.env.NODE_ENV === 'development'
@@ -16,6 +17,19 @@ export default function LoginUI() {
     const [error, setError] = useState("");
     const [user, setUser] = useState<any>(null);
     const [firebaseIdToken, setFirebaseIdToken] = useState<string | null>(null);
+
+    // Kakao SDK 초기화
+    useEffect(() => {
+        const init = async () => {
+            try {
+                await initKakao();
+                console.log('Kakao initialization complete');
+            } catch (error) {
+                console.error('Kakao initialization error:', error);
+            }
+        };
+        init();
+    }, []);
 
     // Firebase 인증 상태 감지
     useEffect(() => {
@@ -138,6 +152,9 @@ export default function LoginUI() {
                 await firebaseSignOut();
             }
 
+            // Kakao 로그아웃
+            await kakaoLogout();
+
             // 로컬 스토리지 정리
             const accessToken = localStorage.getItem("accessToken");
             if (accessToken) {
@@ -168,6 +185,46 @@ export default function LoginUI() {
         } catch (err: any) {
             console.error("Google login error:", err);
             setError(err.message);
+        }
+    };
+
+    // Kakao 로그인 (Firebase Custom Token)
+    const handleKakaoLogin = async () => {
+        try {
+            setError("");
+
+            // 1. 카카오 로그인 → Kakao Access Token 획득
+            const kakaoAccessToken = await kakaoLogin();
+            console.log("Kakao access token:", kakaoAccessToken);
+
+            // 2. 백엔드에 Kakao Access Token 전송 → Firebase Custom Token 획득
+            const response = await fetch(`${API_BASE_URL}/auth/kakao-login`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    kakaoAccessToken: kakaoAccessToken,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "카카오 로그인 실패");
+            }
+
+            const data = await response.json();
+            const firebaseCustomToken = data.firebaseCustomToken;
+            console.log("Firebase custom token received");
+
+            // 3. Firebase Custom Token으로 Firebase 로그인
+            await signInWithCustomToken(auth, firebaseCustomToken);
+            // onAuthStateChanged가 자동으로 처리
+
+            alert("카카오 로그인 성공!");
+        } catch (err: any) {
+            console.error("Kakao login error:", err);
+            setError(err.message || "카카오 로그인 실패");
         }
     };
 
@@ -251,8 +308,13 @@ export default function LoginUI() {
                     </div>
 
                     <button className="btn secondary" onClick={handleGoogleLogin}>
-                        Google로 로그인 (Firebase)
+                        Google로 로그인
                     </button>
+
+                    {/* 임시 비활성화: 카카오 개발자 콘솔 설정 완료 후 주석 해제 */}
+                    {/* <button className="btn secondary" onClick={handleKakaoLogin}>
+                        Kakao로 로그인
+                    </button> */}
                 </div>
             </div>
         </div>
