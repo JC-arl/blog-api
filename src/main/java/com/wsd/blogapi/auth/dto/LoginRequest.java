@@ -12,6 +12,15 @@ public class LoginRequest {
     @NotBlank(message = "password는 필수입니다.")
     private String password;
 
+    // 기본 생성자
+    public LoginRequest() {}
+
+    // 테스트용 생성자
+    public LoginRequest(String email, String password) {
+        this.email = email;
+        this.password = password;
+    }
+
     public String getEmail() { return email; }
     public String getPassword() { return password; }
 }
