@@ -37,6 +37,7 @@ out/
 .vscode/
 
 .env
+api.md
 dev.md
 req.md
 cur.md
