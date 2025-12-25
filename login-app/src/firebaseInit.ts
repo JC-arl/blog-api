@@ -1,23 +1,26 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
+// Firebase 설정 (.env 파일에서 불러오기)
 const firebaseConfig = {
-    apiKey: "AIzaSyCp2_JsoeXkQTwhylN7gfmewbN1fiLIbTc",
-    authDomain: "refdgsgdgf.firebaseapp.com",
-    projectId: "refdgsgdgf",
-    storageBucket: "refdgsgdgf.firebasestorage.app",
-    messagingSenderId: "71135300094",
-    appId: "1:71135300094:web:df01191f593173ee4898af"
+    apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+    authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase
 const firebaseApp = initializeApp(firebaseConfig);
+export const auth = getAuth(firebaseApp);
+export const googleProvider = new GoogleAuthProvider();
 
-const firebaseAuth = getAuth(firebaseApp);
+// Google 로그인
+export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
 
-export default  firebaseAuth;
+// 로그아웃
+export const firebaseSignOut = () => signOut(auth);
+
+// 기본 export (기존 코드 호환성)
+export default auth;
