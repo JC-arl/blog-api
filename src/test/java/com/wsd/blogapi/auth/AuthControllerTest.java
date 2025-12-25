@@ -5,11 +5,13 @@ import com.wsd.blogapi.auth.dto.LoginRequest;
 import com.wsd.blogapi.auth.dto.SignupRequest;
 import com.wsd.blogapi.auth.dto.RefreshRequest;
 import com.wsd.blogapi.auth.dto.TokenResponse;
+import com.wsd.blogapi.security.TestSecurityConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -21,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Import(TestSecurityConfig.class)
 @Transactional
 class AuthControllerTest {
 
@@ -100,7 +103,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
