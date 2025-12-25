@@ -39,3 +39,7 @@ spring:
 firebase:
   project-id: ${FIREBASE_PROJECT_ID}
   service-account-path: ${FIREBASE_SERVICE_ACCOUNT_PATH}
+
+# Kakao 설정
+kakao:
+  rest-api-key: ${KAKAO_REST_API_KEY}
