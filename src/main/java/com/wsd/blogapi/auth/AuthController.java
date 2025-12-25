@@ -1,9 +1,6 @@
 package com.wsd.blogapi.auth;
 
-import com.wsd.blogapi.auth.dto.LoginRequest;
-import com.wsd.blogapi.auth.dto.RefreshRequest;
-import com.wsd.blogapi.auth.dto.SignupRequest;
-import com.wsd.blogapi.auth.dto.TokenResponse;
+import com.wsd.blogapi.auth.dto.*;
 import com.wsd.blogapi.security.AuthUser;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -15,9 +12,11 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final KakaoAuthService kakaoAuthService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, KakaoAuthService kakaoAuthService) {
         this.authService = authService;
+        this.kakaoAuthService = kakaoAuthService;
     }
 
     @PostMapping("/signup")
@@ -39,5 +38,11 @@ public class AuthController {
     @PostMapping("/logout")
     public void logout(@AuthenticationPrincipal AuthUser user) {
         authService.logout(user.getId());
+    }
+
+    @PostMapping("/kakao-login")
+    public FirebaseTokenResponse kakaoLogin(@Valid @RequestBody KakaoLoginRequest req) {
+        String firebaseCustomToken = kakaoAuthService.processKakaoLogin(req.getKakaoAccessToken());
+        return new FirebaseTokenResponse(firebaseCustomToken);
     }
 }

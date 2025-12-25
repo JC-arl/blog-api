@@ -5,13 +5,11 @@ import com.wsd.blogapi.user.UserRole;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
-public class AuthUser implements UserDetails, OAuth2User {
+public class AuthUser implements UserDetails {
 
     private final Long id;
     private final String email;
@@ -57,15 +55,4 @@ public class AuthUser implements UserDetails, OAuth2User {
 
     @Override
     public boolean isEnabled() { return active; }
-
-    // OAuth2User 메서드
-    @Override
-    public Map<String, Object> getAttributes() {
-        return Map.of();
-    }
-
-    @Override
-    public String getName() {
-        return String.valueOf(id);
-    }
 }
