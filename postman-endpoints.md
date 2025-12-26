@@ -11,6 +11,12 @@
 - [6. 관리자 (Admin)](#6-관리자-admin)
 - [7. 헬스체크 (Health)](#7-헬스체크-health)
 - [8. 에러 케이스 테스트](#8-에러-케이스-테스트)
+- [부록](#부록)
+  - [A. 인증 헤더 사용법](#a-인증-헤더-사용법)
+  - [B. 페이징 파라미터](#b-페이징-파라미터)
+  - [C. 권한 레벨](#c-권한-레벨)
+  - [D. 빠른 테스트 순서](#d-빠른-테스트-순서)
+  - [E. 에러 응답 형식](#e-에러-응답-형식)
 
 ---
 
@@ -34,7 +40,7 @@ userId = 1
 
 ### 1.1 회원가입
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/auth/signup`
+- **URL**: `{{base_url}}/auth/signup`
 - **권한**: 공개
 - **설명**: 이메일과 비밀번호로 새로운 계정을 생성하며, 자동으로 JWT 토큰이 발급됩니다.
 - **Request Body**:
@@ -55,7 +61,7 @@ userId = 1
 
 ### 1.2 로그인
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/auth/login`
+- **URL**: `{{base_url}}/auth/login`
 - **권한**: 공개
 - **설명**: 이메일과 비밀번호로 로그인하여 Access Token과 Refresh Token을 발급받습니다.
 - **Request Body**:
@@ -72,16 +78,32 @@ userId = 1
   "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
-- **Postman Tests 스크립트** (토큰 자동 저장):
+
+#### Postman Tests 스크립트
 ```javascript
-const json = pm.response.json();
-pm.environment.set("accessToken", json.accessToken);
-pm.environment.set("refreshToken", json.refreshToken);
+// 로그인 성공 시 토큰을 환경변수에 자동 저장
+pm.test('로그인 성공 - 200 OK', function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test('응답에 토큰 포함 확인', function () {
+    const json = pm.response.json();
+    pm.expect(json).to.have.property('accessToken');
+    pm.expect(json).to.have.property('refreshToken');
+});
+
+// 토큰 환경변수에 저장
+if (pm.response.code === 200) {
+    const json = pm.response.json();
+    pm.environment.set('accessToken', json.accessToken);
+    pm.environment.set('refreshToken', json.refreshToken);
+    console.log('✅ 토큰 저장 완료');
+}
 ```
 
 ### 1.3 토큰 갱신
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/auth/refresh`
+- **URL**: `{{base_url}}/auth/refresh`
 - **권한**: 공개
 - **설명**: Refresh Token으로 새로운 Access Token을 발급받습니다.
 - **Request Body**:
@@ -100,7 +122,7 @@ pm.environment.set("refreshToken", json.refreshToken);
 
 ### 1.4 로그아웃
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/auth/logout`
+- **URL**: `{{base_url}}/auth/logout`
 - **권한**: 인증 필요
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -109,7 +131,7 @@ pm.environment.set("refreshToken", json.refreshToken);
 
 ### 1.5 카카오 로그인
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/auth/kakao-login`
+- **URL**: `{{base_url}}/auth/kakao-login`
 - **권한**: 공개
 - **설명**: 카카오 Access Token으로 로그인하고 Firebase Custom Token을 발급받습니다.
 - **Request Body**:
@@ -133,7 +155,7 @@ pm.environment.set("refreshToken", json.refreshToken);
 
 ### 2.1 게시글 생성
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/posts`
+- **URL**: `{{base_url}}/posts`
 - **권한**: 인증 필요
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -146,15 +168,45 @@ pm.environment.set("refreshToken", json.refreshToken);
 }
 ```
 - **Response**: `201 Created`
-- **Postman Tests 스크립트** (postId 저장):
+
+#### Postman Pre-request Script
 ```javascript
-const json = pm.response.json();
-pm.environment.set("postId", json.id);
+// Authorization 헤더 자동 주입
+const token = pm.environment.get('accessToken');
+if (token) {
+    pm.request.headers.add({
+        key: 'Authorization',
+        value: 'Bearer ' + token
+    });
+    console.log('✅ 토큰 자동 주입 완료');
+}
+```
+
+#### Postman Tests 스크립트
+```javascript
+// 게시글 생성 후 postId를 환경변수에 저장
+pm.test('게시글 생성 성공 - 201 Created', function () {
+    pm.response.to.have.status(201);
+});
+
+pm.test('게시글 데이터 검증', function () {
+    const json = pm.response.json();
+    pm.expect(json).to.have.property('id');
+    pm.expect(json).to.have.property('title');
+    pm.expect(json).to.have.property('content');
+});
+
+// postId 저장
+if (pm.response.code === 201) {
+    const json = pm.response.json();
+    pm.environment.set('postId', json.id);
+    console.log('✅ postId 저장: ' + json.id);
+}
 ```
 
 ### 2.2 게시글 목록 조회
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/posts?page=0&size=20&sort=createdAt,desc`
+- **URL**: `{{base_url}}/posts?page=0&size=20&sort=createdAt,desc`
 - **권한**: 공개
 - **설명**: 공개된 게시글 목록을 페이징하여 조회합니다.
 - **Query Parameters**:
@@ -163,9 +215,29 @@ pm.environment.set("postId", json.id);
   - `sort`: 정렬 기준 (default: createdAt,desc)
 - **Response**: `200 OK` (Page 객체)
 
+#### Postman Tests 스크립트
+```javascript
+// 페이징 응답의 구조와 성능 검증
+pm.test('게시글 목록 조회 성공 - 200 OK', function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test('페이징 데이터 구조 검증', function () {
+    const json = pm.response.json();
+    pm.expect(json).to.have.property('content');
+    pm.expect(json).to.have.property('totalElements');
+    pm.expect(json).to.have.property('totalPages');
+    pm.expect(json.content).to.be.an('array');
+});
+
+pm.test('응답 시간 확인 (2초 이내)', function () {
+    pm.expect(pm.response.responseTime).to.be.below(2000);
+});
+```
+
 ### 2.3 게시글 검색
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/posts/search?keyword=spring&page=0&size=20&sort=createdAt,desc`
+- **URL**: `{{base_url}}/posts/search?keyword=spring&page=0&size=20&sort=createdAt,desc`
 - **권한**: 공개
 - **설명**: 제목 또는 내용으로 게시글을 검색합니다.
 - **Query Parameters**:
@@ -175,20 +247,20 @@ pm.environment.set("postId", json.id);
 
 ### 2.4 카테고리별 게시글 조회
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/posts/category/{{categoryId}}?page=0&size=20&sort=createdAt,desc`
+- **URL**: `{{base_url}}/posts/category/{{categoryId}}?page=0&size=20&sort=createdAt,desc`
 - **권한**: 공개
 - **Response**: `200 OK` (Page 객체)
 
 ### 2.5 게시글 상세 조회
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/posts/{{postId}}`
+- **URL**: `{{base_url}}/posts/{{postId}}`
 - **권한**: 공개
 - **설명**: 게시글 ID로 상세 정보를 조회합니다. 조회 시 조회수가 증가합니다.
 - **Response**: `200 OK`
 
 ### 2.6 내 게시글 목록
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/posts/my?page=0&size=20&sort=createdAt,desc`
+- **URL**: `{{base_url}}/posts/my?page=0&size=20&sort=createdAt,desc`
 - **권한**: 인증 필요
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -197,7 +269,7 @@ pm.environment.set("postId", json.id);
 
 ### 2.7 게시글 수정
 - **Method**: `PUT`
-- **URL**: `{{baseUrl}}/posts/{{postId}}`
+- **URL**: `{{base_url}}/posts/{{postId}}`
 - **권한**: 인증 필요 (작성자 본인)
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -213,7 +285,7 @@ pm.environment.set("postId", json.id);
 
 ### 2.8 게시글 삭제 (소프트 삭제)
 - **Method**: `DELETE`
-- **URL**: `{{baseUrl}}/posts/{{postId}}`
+- **URL**: `{{base_url}}/posts/{{postId}}`
 - **권한**: 인증 필요 (작성자 본인)
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -221,7 +293,7 @@ pm.environment.set("postId", json.id);
 
 ### 2.9 게시글 강제 삭제
 - **Method**: `DELETE`
-- **URL**: `{{baseUrl}}/posts/{{postId}}/force`
+- **URL**: `{{base_url}}/posts/{{postId}}/force`
 - **권한**: 관리자 전용
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -234,7 +306,7 @@ pm.environment.set("postId", json.id);
 
 ### 3.1 댓글 작성
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/posts/{{postId}}/comments`
+- **URL**: `{{base_url}}/posts/{{postId}}/comments`
 - **권한**: 인증 필요
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -245,15 +317,43 @@ pm.environment.set("postId", json.id);
 }
 ```
 - **Response**: `201 Created`
-- **Postman Tests 스크립트** (commentId 저장):
+
+#### Postman Pre-request Script
 ```javascript
-const json = pm.response.json();
-pm.environment.set("commentId", json.id);
+// Authorization 헤더 자동 주입
+const token = pm.environment.get('accessToken');
+if (token) {
+    pm.request.headers.add({
+        key: 'Authorization',
+        value: 'Bearer ' + token
+    });
+}
+```
+
+#### Postman Tests 스크립트
+```javascript
+// 댓글 생성 후 commentId를 환경변수에 저장
+pm.test('댓글 생성 성공 - 201 Created', function () {
+    pm.response.to.have.status(201);
+});
+
+pm.test('댓글 데이터 검증', function () {
+    const json = pm.response.json();
+    pm.expect(json).to.have.property('id');
+    pm.expect(json).to.have.property('content');
+});
+
+// commentId 저장
+if (pm.response.code === 201) {
+    const json = pm.response.json();
+    pm.environment.set('commentId', json.id);
+    console.log('✅ commentId 저장: ' + json.id);
+}
 ```
 
 ### 3.2 댓글 목록 조회
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/posts/{{postId}}/comments?page=0&size=20&sort=createdAt,asc`
+- **URL**: `{{base_url}}/posts/{{postId}}/comments?page=0&size=20&sort=createdAt,asc`
 - **권한**: 공개
 - **설명**: 게시글의 댓글 목록을 조회합니다.
 - **Query Parameters**:
@@ -264,7 +364,7 @@ pm.environment.set("commentId", json.id);
 
 ### 3.3 댓글 수 조회
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/posts/{{postId}}/comments/count`
+- **URL**: `{{base_url}}/posts/{{postId}}/comments/count`
 - **권한**: 공개
 - **Response**: `200 OK`
 ```json
@@ -273,13 +373,13 @@ pm.environment.set("commentId", json.id);
 
 ### 3.4 댓글 단건 조회
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/comments/{{commentId}}`
+- **URL**: `{{base_url}}/comments/{{commentId}}`
 - **권한**: 공개
 - **Response**: `200 OK`
 
 ### 3.5 내 댓글 목록
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/comments/my?page=0&size=20&sort=createdAt,desc`
+- **URL**: `{{base_url}}/comments/my?page=0&size=20&sort=createdAt,desc`
 - **권한**: 인증 필요
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -287,7 +387,7 @@ pm.environment.set("commentId", json.id);
 
 ### 3.6 댓글 수정
 - **Method**: `PUT`
-- **URL**: `{{baseUrl}}/comments/{{commentId}}`
+- **URL**: `{{base_url}}/comments/{{commentId}}`
 - **권한**: 인증 필요 (작성자 본인)
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -301,7 +401,7 @@ pm.environment.set("commentId", json.id);
 
 ### 3.7 댓글 삭제 (소프트 삭제)
 - **Method**: `DELETE`
-- **URL**: `{{baseUrl}}/comments/{{commentId}}`
+- **URL**: `{{base_url}}/comments/{{commentId}}`
 - **권한**: 인증 필요 (작성자 본인)
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -309,7 +409,7 @@ pm.environment.set("commentId", json.id);
 
 ### 3.8 댓글 강제 삭제
 - **Method**: `DELETE`
-- **URL**: `{{baseUrl}}/comments/{{commentId}}/force`
+- **URL**: `{{base_url}}/comments/{{commentId}}/force`
 - **권한**: 관리자 전용
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -321,7 +421,7 @@ pm.environment.set("commentId", json.id);
 
 ### 4.1 좋아요 토글
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/posts/{{postId}}/like`
+- **URL**: `{{base_url}}/posts/{{postId}}/like`
 - **권한**: 인증 필요
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -336,7 +436,7 @@ pm.environment.set("commentId", json.id);
 
 ### 4.2 좋아요 상태 확인
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/posts/{{postId}}/like/status`
+- **URL**: `{{base_url}}/posts/{{postId}}/like/status`
 - **권한**: 인증 필요
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -350,7 +450,7 @@ pm.environment.set("commentId", json.id);
 
 ### 4.3 좋아요 수 조회
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/posts/{{postId}}/like/count`
+- **URL**: `{{base_url}}/posts/{{postId}}/like/count`
 - **권한**: 공개
 - **Response**: `200 OK`
 ```json
@@ -359,13 +459,13 @@ pm.environment.set("commentId", json.id);
 
 ### 4.4 좋아요한 사용자 목록
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/posts/{{postId}}/likes?page=0&size=20&sort=createdAt,desc`
+- **URL**: `{{base_url}}/posts/{{postId}}/likes?page=0&size=20&sort=createdAt,desc`
 - **권한**: 공개
 - **Response**: `200 OK` (Page 객체)
 
 ### 4.5 내가 좋아요한 게시글
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/likes/my?page=0&size=20&sort=createdAt,desc`
+- **URL**: `{{base_url}}/likes/my?page=0&size=20&sort=createdAt,desc`
 - **권한**: 인증 필요
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -379,7 +479,7 @@ pm.environment.set("commentId", json.id);
 
 ### 5.1 카테고리 생성
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/categories`
+- **URL**: `{{base_url}}/categories`
 - **권한**: 관리자 전용
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -400,25 +500,25 @@ pm.environment.set("categoryId", json.id);
 
 ### 5.2 카테고리 목록 조회
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/categories`
+- **URL**: `{{base_url}}/categories`
 - **권한**: 공개
 - **Response**: `200 OK` (List)
 
 ### 5.3 카테고리 조회 (ID)
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/categories/{{categoryId}}`
+- **URL**: `{{base_url}}/categories/{{categoryId}}`
 - **권한**: 공개
 - **Response**: `200 OK`
 
 ### 5.4 카테고리 조회 (Slug)
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/categories/slug/notice`
+- **URL**: `{{base_url}}/categories/slug/notice`
 - **권한**: 공개
 - **Response**: `200 OK`
 
 ### 5.5 카테고리 수정
 - **Method**: `PUT`
-- **URL**: `{{baseUrl}}/categories/{{categoryId}}`
+- **URL**: `{{base_url}}/categories/{{categoryId}}`
 - **권한**: 관리자 전용
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -434,7 +534,7 @@ pm.environment.set("categoryId", json.id);
 
 ### 5.6 카테고리 삭제
 - **Method**: `DELETE`
-- **URL**: `{{baseUrl}}/categories/{{categoryId}}`
+- **URL**: `{{base_url}}/categories/{{categoryId}}`
 - **권한**: 관리자 전용
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -448,7 +548,7 @@ pm.environment.set("categoryId", json.id);
 
 ### 6.1 통계 조회
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/admin/statistics`
+- **URL**: `{{base_url}}/admin/statistics`
 - **권한**: 관리자 전용
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -463,7 +563,7 @@ pm.environment.set("categoryId", json.id);
 
 ### 6.2 사용자 목록 조회
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/admin/users?page=0&size=20&sort=createdAt,desc`
+- **URL**: `{{base_url}}/admin/users?page=0&size=20&sort=createdAt,desc`
 - **권한**: 관리자 전용
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -471,7 +571,7 @@ pm.environment.set("categoryId", json.id);
 
 ### 6.3 상태별 사용자 조회
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/admin/users/status/ACTIVE?page=0&size=20&sort=createdAt,desc`
+- **URL**: `{{base_url}}/admin/users/status/ACTIVE?page=0&size=20&sort=createdAt,desc`
 - **권한**: 관리자 전용
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -481,7 +581,7 @@ pm.environment.set("categoryId", json.id);
 
 ### 6.4 사용자 상세 조회
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/admin/users/{{userId}}`
+- **URL**: `{{base_url}}/admin/users/{{userId}}`
 - **권한**: 관리자 전용
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -489,7 +589,7 @@ pm.environment.set("categoryId", json.id);
 
 ### 6.5 사용자 정보 수정
 - **Method**: `PUT`
-- **URL**: `{{baseUrl}}/admin/users/{{userId}}`
+- **URL**: `{{base_url}}/admin/users/{{userId}}`
 - **권한**: 관리자 전용
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -505,7 +605,7 @@ pm.environment.set("categoryId", json.id);
 
 ### 6.6 사용자 정지
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/admin/users/{{userId}}/suspend`
+- **URL**: `{{base_url}}/admin/users/{{userId}}/suspend`
 - **권한**: 관리자 전용
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -513,7 +613,7 @@ pm.environment.set("categoryId", json.id);
 
 ### 6.7 사용자 정지 해제
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/admin/users/{{userId}}/activate`
+- **URL**: `{{base_url}}/admin/users/{{userId}}/activate`
 - **권한**: 관리자 전용
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -521,7 +621,7 @@ pm.environment.set("categoryId", json.id);
 
 ### 6.8 사용자 삭제
 - **Method**: `DELETE`
-- **URL**: `{{baseUrl}}/admin/users/{{userId}}`
+- **URL**: `{{base_url}}/admin/users/{{userId}}`
 - **권한**: 관리자 전용
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
@@ -533,7 +633,7 @@ pm.environment.set("categoryId", json.id);
 
 ### 7.1 서버 상태 확인
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/health`
+- **URL**: `{{base_url}}/health`
 - **권한**: 공개
 - **설명**: 서버가 정상적으로 동작하는지 확인합니다.
 - **Response**: `200 OK`
@@ -556,7 +656,7 @@ pm.environment.set("categoryId", json.id);
 
 #### 8.1.1 토큰 없이 인증 필요 엔드포인트 호출
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/posts`
+- **URL**: `{{base_url}}/posts`
 - **Headers**: Authorization 헤더 없음
 - **Request Body**:
 ```json
@@ -567,19 +667,27 @@ pm.environment.set("categoryId", json.id);
 }
 ```
 - **Expected Response**: `401 Unauthorized`
-```json
-{
-  "timestamp": "2025-01-15T15:45:00Z",
-  "status": 401,
-  "error": "Unauthorized",
-  "message": "인증이 필요합니다",
-  "path": "/posts"
-}
+
+**Postman Tests 스크립트**:
+```javascript
+// 401 에러 검증
+pm.test('401 Unauthorized 에러 발생', function () {
+    pm.response.to.have.status(401);
+});
+
+pm.test('에러 응답 구조 검증', function () {
+    const json = pm.response.json();
+    pm.expect(json).to.have.property('status');
+    pm.expect(json).to.have.property('error');
+    pm.expect(json.status).to.eql(401);
+});
+
+console.log('✅ 401 에러 케이스 검증 완료: 인증 토큰 없음');
 ```
 
 #### 8.1.2 잘못된 토큰으로 API 호출
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/posts/{{postId}}/comments`
+- **URL**: `{{base_url}}/posts/{{postId}}/comments`
 - **Headers**:
   - `Authorization: Bearer invalid_token_here`
 - **Request Body**:
@@ -592,7 +700,7 @@ pm.environment.set("categoryId", json.id);
 
 #### 8.1.3 틀린 비밀번호로 로그인 시도
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/auth/login`
+- **URL**: `{{base_url}}/auth/login`
 - **Request Body**:
 ```json
 {
@@ -613,7 +721,7 @@ pm.environment.set("categoryId", json.id);
 
 #### 8.1.4 존재하지 않는 이메일로 로그인 시도
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/auth/login`
+- **URL**: `{{base_url}}/auth/login`
 - **Request Body**:
 ```json
 {
@@ -627,7 +735,7 @@ pm.environment.set("categoryId", json.id);
 
 #### 8.2.1 일반 사용자가 관리자 전용 카테고리 생성 시도
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/categories`
+- **URL**: `{{base_url}}/categories`
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}` (일반 사용자 토큰)
 - **Request Body**:
@@ -651,7 +759,7 @@ pm.environment.set("categoryId", json.id);
 
 #### 8.2.2 다른 사용자의 게시글 수정 시도
 - **Method**: `PUT`
-- **URL**: `{{baseUrl}}/posts/{{postId}}`
+- **URL**: `{{base_url}}/posts/{{postId}}`
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}` (작성자가 아닌 다른 사용자 토큰)
 - **Request Body**:
@@ -666,7 +774,7 @@ pm.environment.set("categoryId", json.id);
 
 #### 8.2.3 일반 사용자가 사용자 목록 조회 시도
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/admin/users`
+- **URL**: `{{base_url}}/admin/users`
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}` (일반 사용자 토큰)
 - **Expected Response**: `403 Forbidden`
@@ -675,7 +783,7 @@ pm.environment.set("categoryId", json.id);
 
 #### 8.3.1 필수 필드 누락 - 제목 없이 게시글 작성
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/posts`
+- **URL**: `{{base_url}}/posts`
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
 - **Request Body**:
@@ -686,19 +794,26 @@ pm.environment.set("categoryId", json.id);
 }
 ```
 - **Expected Response**: `400 Bad Request`
-```json
-{
-  "timestamp": "2025-01-15T15:45:00Z",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "제목은 필수입니다",
-  "path": "/posts"
-}
+
+**Postman Tests 스크립트**:
+```javascript
+// 400 에러 검증
+pm.test('400 Bad Request 에러 발생', function () {
+    pm.response.to.have.status(400);
+});
+
+pm.test('유효성 검증 실패 확인', function () {
+    const json = pm.response.json();
+    pm.expect(json).to.have.property('status');
+    pm.expect(json.status).to.eql(400);
+});
+
+console.log('✅ 400 에러 케이스 검증 완료: 필수 필드 누락');
 ```
 
 #### 8.3.2 이메일 형식 오류로 회원가입 시도
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/auth/signup`
+- **URL**: `{{base_url}}/auth/signup`
 - **Request Body**:
 ```json
 {
@@ -720,7 +835,7 @@ pm.environment.set("categoryId", json.id);
 
 #### 8.3.3 이미 존재하는 이메일로 회원가입 시도
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/auth/signup`
+- **URL**: `{{base_url}}/auth/signup`
 - **Request Body**:
 ```json
 {
@@ -742,7 +857,7 @@ pm.environment.set("categoryId", json.id);
 
 #### 8.3.4 빈 내용으로 댓글 작성 시도
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/posts/{{postId}}/comments`
+- **URL**: `{{base_url}}/posts/{{postId}}/comments`
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
 - **Request Body**:
@@ -755,7 +870,7 @@ pm.environment.set("categoryId", json.id);
 
 #### 8.3.5 유효하지 않은 Refresh Token으로 토큰 갱신 시도
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/auth/refresh`
+- **URL**: `{{base_url}}/auth/refresh`
 - **Request Body**:
 ```json
 {
@@ -768,21 +883,28 @@ pm.environment.set("categoryId", json.id);
 
 #### 8.4.1 존재하지 않는 게시글 조회
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/posts/99999`
+- **URL**: `{{base_url}}/posts/99999`
 - **Expected Response**: `404 Not Found`
-```json
-{
-  "timestamp": "2025-01-15T15:45:00Z",
-  "status": 404,
-  "error": "Not Found",
-  "message": "게시글을 찾을 수 없습니다",
-  "path": "/posts/99999"
-}
+
+**Postman Tests 스크립트**:
+```javascript
+// 404 에러 검증
+pm.test('404 Not Found 에러 발생', function () {
+    pm.response.to.have.status(404);
+});
+
+pm.test('리소스 없음 확인', function () {
+    const json = pm.response.json();
+    pm.expect(json).to.have.property('status');
+    pm.expect(json.status).to.eql(404);
+});
+
+console.log('✅ 404 에러 케이스 검증 완료: 존재하지 않는 리소스');
 ```
 
 #### 8.4.2 존재하지 않는 카테고리로 게시글 작성
 - **Method**: `POST`
-- **URL**: `{{baseUrl}}/posts`
+- **URL**: `{{base_url}}/posts`
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
 - **Request Body**:
@@ -806,7 +928,7 @@ pm.environment.set("categoryId", json.id);
 
 #### 8.4.3 존재하지 않는 댓글 수정 시도
 - **Method**: `PUT`
-- **URL**: `{{baseUrl}}/comments/99999`
+- **URL**: `{{base_url}}/comments/99999`
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}`
 - **Request Body**:
@@ -819,12 +941,12 @@ pm.environment.set("categoryId", json.id);
 
 #### 8.4.4 존재하지 않는 카테고리 조회 (Slug)
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/categories/slug/nonexistent-category`
+- **URL**: `{{base_url}}/categories/slug/nonexistent-category`
 - **Expected Response**: `404 Not Found`
 
 #### 8.4.5 존재하지 않는 사용자 조회 (관리자)
 - **Method**: `GET`
-- **URL**: `{{baseUrl}}/admin/users/99999`
+- **URL**: `{{base_url}}/admin/users/99999`
 - **Headers**:
   - `Authorization: Bearer {{accessToken}}` (관리자 토큰)
 - **Expected Response**: `404 Not Found`
@@ -942,7 +1064,7 @@ Postman에서 설정하는 방법:
 
 예시:
 ```
-GET {{baseUrl}}/posts?page=0&size=10&sort=createdAt,desc
+GET {{base_url}}/posts?page=0&size=10&sort=createdAt,desc
 ```
 
 ### C. 권한 레벨
@@ -963,6 +1085,7 @@ GET {{baseUrl}}/posts?page=0&size=10&sort=createdAt,desc
 7. **좋아요**: `POST /posts/{postId}/like`
 8. **목록/검색 API 테스트**
 9. **수정/삭제 API 테스트**
+10. **에러 케이스 테스트** (401, 400, 404 등)
 
 ### E. 에러 응답 형식
 
