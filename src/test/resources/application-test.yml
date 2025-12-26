@@ -1,0 +1,38 @@
+server:
+  # HTTP 헤더 크기 제한
+  max-http-header-size: 8KB
+  # Tomcat 설정
+  tomcat:
+    max-http-form-post-size: 2MB  # POST 요청 본문 크기 제한
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  flyway:
+    enabled: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+app:
+  jwt:
+    secret: test-jwt-secret-key-for-testing-at-least-32-bytes-long
+    access-exp-seconds: 900
+    refresh-exp-seconds: 1209600
+  frontend-url: http://localhost:8080
+  backend-url: http://localhost:8080
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:8080
+
+# Firebase 설정 (테스트용 더미 값)
+firebase:
+  project-id: test-project
+  service-account-path: test-path
+
+# Kakao 설정 (테스트용 더미 값)
+kakao:
+  rest-api-key: test-kakao-key

@@ -1,0 +1,15 @@
+-- users 테이블 생성
+CREATE TABLE users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255),
+    nickname VARCHAR(50) NOT NULL,
+    role VARCHAR(20) NOT NULL COMMENT 'ROLE_USER, ROLE_ADMIN',
+    status VARCHAR(20) NOT NULL COMMENT 'ACTIVE, SUSPENDED',
+    provider VARCHAR(20) NOT NULL COMMENT 'LOCAL, GOOGLE, FIREBASE',
+    provider_id VARCHAR(255),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_users_email (email),
+    INDEX idx_users_provider (provider, provider_id)
+);
