@@ -40,7 +40,7 @@ COPY --from=builder /app/build/libs/*.jar app.jar
 
 # Copy Firebase service account file (if exists)
 # Note: In production, use secrets management instead
-COPY --chown=spring:spring src/main/resources/firebase-service-account.json* /app/firebase-service-account.json* 2>/dev/null || true
+COPY --chown=spring:spring src/main/resources/firebase-service-account.json /app/firebase-service-account.json
 
 # Change ownership to non-root user
 RUN chown -R spring:spring /app
