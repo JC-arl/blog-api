@@ -8,6 +8,10 @@ FROM node:20-alpine AS frontend
 WORKDIR /login-app
 
 # Build arguments for React environment variables
+# NOTE: These are NOT secrets - they are client-side config values that will be
+# embedded in the built JavaScript bundle and sent to browsers. Firebase API keys
+# are protected by domain restrictions in Firebase Console, not by keeping them secret.
+# hadolint ignore=DL3007,DL3009
 ARG REACT_APP_FIREBASE_API_KEY
 ARG REACT_APP_FIREBASE_AUTH_DOMAIN
 ARG REACT_APP_FIREBASE_PROJECT_ID
@@ -18,6 +22,7 @@ ARG REACT_APP_KAKAO_REST_API_KEY
 ARG REACT_APP_BACKEND_URL
 
 # Set environment variables for React build
+# These values will be embedded in the JavaScript bundle during build
 ENV REACT_APP_FIREBASE_API_KEY=$REACT_APP_FIREBASE_API_KEY \
     REACT_APP_FIREBASE_AUTH_DOMAIN=$REACT_APP_FIREBASE_AUTH_DOMAIN \
     REACT_APP_FIREBASE_PROJECT_ID=$REACT_APP_FIREBASE_PROJECT_ID \
