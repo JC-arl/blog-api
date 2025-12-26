@@ -21,12 +21,12 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResolver(new PathResourceResolver() {
                     @Override
                     protected Resource getResource(String resourcePath, Resource location) throws IOException {
-                        Resource requestedResource = location.createRelative(resourcePath);
-
-                        // API 경로가 아니고, 리소스가 존재하면 리소스 반환
-                        if (requestedResource.exists() && requestedResource.isReadable()) {
-                            return requestedResource;
+                        // 빈 경로나 루트 경로는 index.html로 처리
+                        if (resourcePath == null || resourcePath.isEmpty() || ".".equals(resourcePath)) {
+                            return new ClassPathResource("/static/index.html");
                         }
+
+                        Resource requestedResource = location.createRelative(resourcePath);
 
                         // API 경로는 Spring MVC가 처리하도록 null 반환
                         if (resourcePath.startsWith("api/") ||
@@ -36,6 +36,11 @@ public class WebConfig implements WebMvcConfigurer {
                             resourcePath.startsWith("swagger-ui") ||
                             resourcePath.startsWith("v3/api-docs")) {
                             return null;
+                        }
+
+                        // 리소스가 존재하면 리소스 반환
+                        if (requestedResource.exists() && requestedResource.isReadable()) {
+                            return requestedResource;
                         }
 
                         // 그 외의 경우 index.html로 fallback (React Router 지원)
