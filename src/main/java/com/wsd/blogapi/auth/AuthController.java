@@ -101,4 +101,36 @@ public class AuthController {
         String firebaseCustomToken = kakaoAuthService.processKakaoLogin(req.getKakaoAccessToken());
         return new FirebaseTokenResponse(firebaseCustomToken);
     }
+
+    @Operation(
+            summary = "내 정보 조회",
+            description = "현재 로그인한 사용자의 정보를 조회합니다.",
+            security = @SecurityRequirement(name = "JWT")
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @GetMapping("/me")
+    public UserResponse getMe(@AuthenticationPrincipal AuthUser user) {
+        return authService.getMe(user.getId());
+    }
+
+    @Operation(
+            summary = "내 정보 수정",
+            description = "현재 로그인한 사용자의 프로필 정보를 수정합니다.",
+            security = @SecurityRequirement(name = "JWT")
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "수정 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @PatchMapping("/me")
+    public UserResponse updateProfile(
+            @Valid @RequestBody UpdateProfileRequest request,
+            @AuthenticationPrincipal AuthUser user
+    ) {
+        return authService.updateProfile(user.getId(), request);
+    }
 }
