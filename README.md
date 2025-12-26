@@ -109,13 +109,26 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 #### 프로덕션 배포 (GHCR 이미지 사용)
 
-```bash
-# .env에서 DOCKER_IMAGE 설정
-# DOCKER_IMAGE=ghcr.io/YOUR_USERNAME/blog-api:latest
+**서버 배포 방법은 [DEPLOYMENT.md](./DEPLOYMENT.md) 참조**
 
+간단한 배포 명령어:
+
+```bash
+# 서버에서 실행 (Docker 및 .env 설정 완료 후)
 docker compose pull
 docker compose up -d
+
+# Health 확인
+curl http://113.198.66.68/health
 ```
+
+**배포 전 필수 작업:**
+- ✅ `.env` 파일 작성 (환경변수 설정)
+- ✅ `secrets/firebase-service-account.json` 파일 업로드
+- ✅ Firebase Authorized domains에 서버 IP 추가
+- ✅ GitHub Actions 빌드 완료 확인
+
+자세한 내용은 [배포 가이드](./DEPLOYMENT.md)를 참조하세요.
 
 ### 4. Gradle로 실행
 
@@ -189,9 +202,27 @@ java -jar build/libs/blog-api-0.0.1-SNAPSHOT.jar
 | `FIREBASE_PROJECT_ID` | Firebase 프로젝트 ID | - | O |
 | `FIREBASE_SERVICE_ACCOUNT_PATH` | 서비스 계정 키 파일 경로 | `/app/firebase-service-account.json` (Docker) | X |
 
-**참고:**
-- Docker: 파일이 `/app/firebase-service-account.json`에 자동 마운트됨
-- 로컬: `src/main/resources/firebase-service-account.json` 경로에 파일 배치 후 환경변수 설정
+**서비스 계정 키 파일 배치:**
+- **Docker 프로덕션**: `~/blog-api/secrets/firebase-service-account.json`에 파일 배치 (docker-compose.yml이 자동 마운트)
+- **로컬 개발**: `src/main/resources/firebase-service-account.json` 경로에 파일 배치
+- 환경변수 `FIREBASE_SERVICE_ACCOUNT_PATH`는 주석 처리 유지 (기본값 사용)
+
+**승인된 도메인 설정 (중요!):**
+
+Firebase Auth (Google 로그인 등)를 사용하려면 Firebase Console에서 도메인을 승인해야 합니다:
+
+1. [Firebase Console](https://console.firebase.google.com/) → 프로젝트 선택
+2. **Authentication** → **Settings** → **Authorized domains**
+3. **Add domain** 클릭
+4. 다음 도메인 추가:
+   - `localhost` (기본 포함)
+   - `113.198.66.68` (프로덕션 서버)
+   - `yourdomain.com` (커스텀 도메인 사용 시)
+
+**미설정 시 오류:**
+```
+Firebase: Error (auth/unauthorized-domain)
+```
 
 ### Kakao OAuth 설정
 
