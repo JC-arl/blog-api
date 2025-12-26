@@ -40,6 +40,7 @@ out/
 api.md
 dev.md
 DEV_REQUIREMENTS_CHECK.md
+HW1-docs
 /login-app/node_modules
 /src/main/resources/firebase-service-account.json
 nul

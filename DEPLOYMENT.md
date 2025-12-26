@@ -57,17 +57,47 @@ git push origin main
 
 #### 3-1. .env 파일 설정
 
-서버의 `.env` 파일에서 Docker 이미지 설정:
+서버의 `.env` 파일에서 필수 환경변수 설정:
 
 ```bash
 # .env 파일
+
+# Docker 이미지 설정
 DOCKER_IMAGE=ghcr.io/YOUR_GITHUB_USERNAME/blog-api:latest
 
-# 나머지 환경변수 설정
+# 서버 배포 주소 (서버의 공인 IP 또는 도메인)
+APP_PORT=80
+PUBLISHED_URL=113.198.66.68
+
+# URL 설정 (PUBLISHED_URL을 반영)
+FRONTEND_URL=http://113.198.66.68
+BACKEND_URL=http://113.198.66.68
+CORS_ALLOWED_ORIGINS=http://113.198.66.68,http://localhost:3000,http://localhost:8080
+
+# Spring 환경
 SPRING_PROFILES_ACTIVE=prod
+
+# 데이터베이스 설정
 MYSQL_ROOT_PASSWORD=your_secure_password
-# ... 기타 설정
+MYSQL_DATABASE=blog
+MYSQL_USER=app
+MYSQL_PASSWORD=your_secure_password
+
+# JWT 설정
+JWT_SECRET=your-super-secret-jwt-key-at-least-32-bytes-long
+
+# Firebase 설정
+FIREBASE_PROJECT_ID=your-firebase-project-id
+# Firebase 경로는 docker-compose.yml의 기본값 사용 (주석 처리 유지)
+
+# Kakao 설정
+KAKAO_REST_API_KEY=your-kakao-rest-api-key
 ```
+
+**중요**:
+- `PUBLISHED_URL`에 서버의 공인 IP 주소나 도메인을 설정하세요
+- `FRONTEND_URL`, `BACKEND_URL`, `CORS_ALLOWED_ORIGINS`에 자동으로 반영됩니다
+- 보안을 위해 비밀번호와 키는 반드시 변경하세요
 
 #### 3-2. GHCR 로그인 (최초 1회)
 
