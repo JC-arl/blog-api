@@ -14,14 +14,10 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 정적 리소스 핸들러 (static 폴더의 파일들)
-        registry.addResourceHandler("/static/**", "/favicon.ico", "/logo*.png", "/manifest.json", "/robots.txt", "/asset-manifest.json")
-                .addResourceLocations("classpath:/static/")
-                .setCachePeriod(3600);
-
-        // React SPA를 위한 fallback 설정 (루트 제외)
+        // 모든 정적 리소스를 /static/ 아래에서 찾도록 설정
         registry.addResourceHandler("/**")
                 .addResourceLocations("classpath:/static/")
+                .setCachePeriod(3600)
                 .resourceChain(true)
                 .addResolver(new PathResourceResolver() {
                     @Override
