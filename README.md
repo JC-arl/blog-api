@@ -62,8 +62,11 @@ JWT + 소셜 로그인(Firebase/Google, Kakao) 인증, Redis 캐싱, Docker 배�
 | **API Docs** | SpringDoc OpenAPI 3 (Swagger UI) |
 
 ---
+## 헬스체크
+
 
 ## 🌐 배포 주소
+![헬스체크](healthcheck_200.png)
 
 ### 프로덕션 환경
 
