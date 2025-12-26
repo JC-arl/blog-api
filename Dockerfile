@@ -77,7 +77,7 @@ RUN addgroup -S spring && adduser -S spring -G spring
 COPY --from=backend /app/build/libs/*.jar app.jar
 
 # Note: Firebase service account file is mounted via docker-compose.yml volume
-# from secrets/firebase-service-account.json to /app/firebase-service-account.json
+# from secrets/firebase-service-account.json to /app/
 
 # Change ownership to non-root user
 RUN chown -R spring:spring /app
@@ -85,8 +85,8 @@ RUN chown -R spring:spring /app
 USER spring
 
 # Expose application port
-# Note: Actual port is determined by APP_PORT environment variable (default: 8080)
-EXPOSE 8080 80
+# Note: Actual port is determined by APP_PORT environment variable (default: 80)
+EXPOSE 80 8080
 
 # Health check
 # Note: docker-compose.yml overrides this with dynamic port from APP_PORT

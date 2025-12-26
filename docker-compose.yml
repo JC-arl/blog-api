@@ -79,8 +79,15 @@ services:
 
       # Firebase
       FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      FIREBASE_SERVICE_ACCOUNT_PATH: ${FIREBASE_SERVICE_ACCOUNT_PATH:-/app/firebase-service-account.json}
 
+      # Kakao
+      KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY}
+    ports:
+      - "${APP_PORT:-8080}:80"
 
+    volumes:
+      - ./secrets/firebase-service-account.json:/app/firebase-service-account.json:ro
     networks:
       - blog-network
     healthcheck:
