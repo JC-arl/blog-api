@@ -98,7 +98,8 @@ public class AuthController {
 
     @Operation(
             summary = "카카오 로그인",
-            description = "카카오 Access Token으로 로그인하고 Firebase Custom Token을 발급받습니다."
+            description = "카카오 Access Token으로 로그인하고 Firebase Custom Token을 발급받습니다.",
+            hidden = true
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "카카오 로그인 성공"),

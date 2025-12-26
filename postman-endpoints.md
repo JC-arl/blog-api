@@ -23,7 +23,7 @@
 ## Postman 환경변수 설정 추천
 
 ```
-baseUrl = http://localhost:8080
+base_url = http://localhost:8080
 accessToken = (로그인 후 받은 토큰)
 refreshToken = (로그인 후 받은 리프레시 토큰)
 postId = 1
@@ -31,6 +31,8 @@ commentId = 1
 categoryId = 1
 userId = 1
 ```
+
+**참고**: 문서의 모든 엔드포인트 URL에서 `{{base_url}}`을 사용합니다.
 
 ---
 
@@ -128,6 +130,32 @@ if (pm.response.code === 200) {
   - `Authorization: Bearer {{accessToken}}`
 - **설명**: 현재 로그인된 사용자를 로그아웃하며, Refresh Token이 무효화됩니다.
 - **Response**: `200 OK`
+
+#### Postman Pre-request Script
+```javascript
+// Authorization 헤더 자동 주입
+const token = pm.environment.get('accessToken');
+if (token) {
+    pm.request.headers.add({
+        key: 'Authorization',
+        value: 'Bearer ' + token
+    });
+}
+```
+
+#### Postman Tests 스크립트
+```javascript
+// 로그아웃 성공 시 환경변수에서 토큰 삭제
+pm.test('로그아웃 성공 - 200 OK', function () {
+    pm.response.to.have.status(200);
+});
+
+if (pm.response.code === 200) {
+    pm.environment.unset('accessToken');
+    pm.environment.unset('refreshToken');
+    console.log('✅ 로그아웃 완료 - 토큰 삭제됨');
+}
+```
 
 ### 1.5 카카오 로그인
 - **Method**: `POST`
