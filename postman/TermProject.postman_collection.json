@@ -1,0 +1,1355 @@
+{
+	"info": {
+		"_postman_id": "a7f4217f-e1f6-4772-b811-231bceec264b",
+		"name": "TermProject",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48959477",
+		"_collection_link": "https://hwang1535-8182378.postman.co/workspace/%25ED%2599%25A9%25EC%25A7%2580%25EC%25B0%25AC's-Workspace~fedd5d42-c95c-419b-8afb-9f675fc0a89b/collection/48959477-a7f4217f-e1f6-4772-b811-231bceec264b?action=share&source=collection_link&creator=48959477"
+	},
+	"item": [
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "회원가입",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"test@example.com\",\r\n  \"password\": \"12345678\",\r\n  \"nickname\": \"test\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signup",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "로그인",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// 로그인 성공 시 토큰을 환경변수에 자동 저장\r",
+									"pm.test('로그인 성공 - 200 OK', function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test('응답에 토큰 포함 확인', function () {\r",
+									"    const json = pm.response.json();\r",
+									"    pm.expect(json).to.have.property('accessToken');\r",
+									"    pm.expect(json).to.have.property('refreshToken');\r",
+									"});\r",
+									"\r",
+									"// 토큰 환경변수에 저장\r",
+									"if (pm.response.code === 200) {\r",
+									"    const json = pm.response.json();\r",
+									"    pm.environment.set('accessToken', json.accessToken);\r",
+									"    pm.environment.set('refreshToken', json.refreshToken);\r",
+									"    console.log('✅ 토큰 저장 완료');\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "// {\r\n//   \"email\": \"test@example.com\",\r\n//   \"password\": \"12345678\"\r\n// }\r\n\r\n{\r\n  \"email\": \"admin@blog.com\",\r\n  \"password\": \"admin1234\"\r\n}\r\n\r\n// {\r\n//   \"email\": \"user1@blog.com\",\r\n//   \"password\": \"user1234\"\r\n// }\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "토큰 갱신",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"refreshToken\": \"{{refreshToken}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"refresh"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "로그아웃",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// 로그아웃 성공 시 환경변수에서 토큰 삭제\r",
+									"pm.test('로그아웃 성공 - 200 OK', function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"if (pm.response.code === 200) {\r",
+									"    pm.environment.unset('accessToken');\r",
+									"    pm.environment.unset('refreshToken');\r",
+									"    console.log('✅ 로그아웃 완료 - 토큰 삭제됨');\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "내 정보 조회",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "내 정보 수정",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"nickname\": \"newNickname\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"me"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "posts",
+			"item": [
+				{
+					"name": "게시글 작성",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// 게시글 생성 후 postId를 환경변수에 저장\r",
+									"pm.test('게시글 생성 성공 - 201 Created', function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"pm.test('게시글 데이터 검증', function () {\r",
+									"    const json = pm.response.json();\r",
+									"    pm.expect(json).to.have.property('id');\r",
+									"    pm.expect(json).to.have.property('title');\r",
+									"    pm.expect(json).to.have.property('content');\r",
+									"});\r",
+									"\r",
+									"// postId 저장\r",
+									"if (pm.response.code === 201) {\r",
+									"    const json = pm.response.json();\r",
+									"    pm.environment.set('postId', json.id);\r",
+									"    console.log('✅ postId 저장: ' + json.id);\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"title\": \"test 글\",\r\n  \"content\": \"내용입니다\",\r\n  \"categoryId\": 1,\r\n  \"status\": \"PUBLISHED\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/posts",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"posts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "게시글 목록 (PUBLISHED만)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// 페이징 응답의 구조와 성능 검증\r",
+									"pm.test('게시글 목록 조회 성공 - 200 OK', function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test('페이징 데이터 구조 검증', function () {\r",
+									"    const json = pm.response.json();\r",
+									"    pm.expect(json).to.have.property('content');\r",
+									"    pm.expect(json).to.have.property('totalElements');\r",
+									"    pm.expect(json).to.have.property('totalPages');\r",
+									"    pm.expect(json.content).to.be.an('array');\r",
+									"});\r",
+									"\r",
+									"pm.test('응답 시간 확인 (2초 이내)', function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/posts?page=0&size=20&sort=createdAt,desc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"posts"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "sort",
+									"value": "createdAt,desc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "게시글 검색",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/posts/search?keyword=개발&page=0&size=20&sort=createdAt,desc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"posts",
+								"search"
+							],
+							"query": [
+								{
+									"key": "keyword",
+									"value": "개발"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "sort",
+									"value": "createdAt,desc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "카테고리별 게시글",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/posts/category/3?page=0&size=20&sort=createdAt,desc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"posts",
+								"category",
+								"3"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "sort",
+									"value": "createdAt,desc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "게시글 상세 (조회수+1)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/posts/{{postId}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"posts",
+								"{{postId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "내 게시글 목록",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/posts/my?page=0&size=20&sort=createdAt,desc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"posts",
+								"my"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "sort",
+									"value": "createdAt,desc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "게시글 수정",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"title\": \"수정된 제목\",\r\n  \"content\": \"수정된 내용\",\r\n  \"categoryId\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/posts/{{postId}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"posts",
+								"{{postId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "게시글 삭제 (소프트)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/posts/{{postId}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"posts",
+								"{{postId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "게시글 강제 삭제 (관리자)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/posts/{{postId}}/force",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"posts",
+								"{{postId}}",
+								"force"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "categories",
+			"item": [
+				{
+					"name": "카테고리 생성",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const json = pm.response.json();\r",
+									"pm.environment.set(\"categoryId\", json.id);\r",
+									"\r",
+									"pm.test(\"Category created\", () => {\r",
+									"    pm.expect(json.id).to.exist;\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"공지\",\r\n  \"slug\": \"notice\",\r\n  \"description\": \"공지사항 카테고리\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/categories",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "카테고리 목록",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/categories",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "카테고리 조회 (ID)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/categories/{{categoryId}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"{{categoryId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "카테고리 조회 (Slug)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/categories/slug/notice",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"slug",
+								"notice"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "카테고리 수정(관리자)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"공지(수정)\",\r\n  \"slug\": \"notice\",\r\n  \"description\": \"설명 수정\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/categories/{{categoryId}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"{{categoryId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "카테고리 삭제",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/categories/{{categoryId}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"{{categoryId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "comments",
+			"item": [
+				{
+					"name": "게시글에 댓글 작성",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// 댓글 생성 후 commentId를 환경변수에 저장\r",
+									"pm.test('댓글 생성 성공 - 201 Created', function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"pm.test('댓글 데이터 검증', function () {\r",
+									"    const json = pm.response.json();\r",
+									"    pm.expect(json).to.have.property('id');\r",
+									"    pm.expect(json).to.have.property('content');\r",
+									"});\r",
+									"\r",
+									"// commentId 저장\r",
+									"if (pm.response.code === 201) {\r",
+									"    const json = pm.response.json();\r",
+									"    pm.environment.set('commentId', json.id);\r",
+									"    console.log('✅ commentId 저장: ' + json.id);\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"content\": \"댓글 내용입니다\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/posts/{{postId}}/comments",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"posts",
+								"{{postId}}",
+								"comments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "게시글 댓글 목록",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/posts/{{postId}}/comments?page=0&size=20&sort=createdAt,asc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"posts",
+								"{{postId}}",
+								"comments"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "sort",
+									"value": "createdAt,asc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "게시글 댓글 수",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/posts/{{postId}}/comments/count",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"posts",
+								"{{postId}}",
+								"comments",
+								"count"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "댓글 단건 조회",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/comments/{{commentId}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"comments",
+								"{{commentId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "내 댓글 목록",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/comments/my?page=0&size=20&sort=createdAt,desc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"comments",
+								"my"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "sort",
+									"value": "createdAt,desc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "댓글 수정",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"content\": \"댓글 내용 수정\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/comments/{{commentId}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"comments",
+								"{{commentId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "댓글 삭제 (소프트)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/comments/{{commentId}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"comments",
+								"{{commentId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "댓글 강제 삭제 (관리자)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/comments/{{commentId}}/force",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"comments",
+								"{{commentId}}",
+								"force"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "likes",
+			"item": [
+				{
+					"name": "좋아요 토글",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/posts/{{postId}}/like",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"posts",
+								"{{postId}}",
+								"like"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "좋아요 상태 확인",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/posts/{{postId}}/like/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"posts",
+								"{{postId}}",
+								"like",
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "좋아요 수 조회",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/posts/{{postId}}/like/count",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"posts",
+								"{{postId}}",
+								"like",
+								"count"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "좋아요한 사용자 목록",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/posts/{{postId}}/likes?page=0&size=20&sort=createdAt,desc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"posts",
+								"{{postId}}",
+								"likes"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "sort",
+									"value": "createdAt,desc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "내가 좋아요한 게시글",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/likes/my?page=0&size=20&sort=createdAt,desc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"likes",
+								"my"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "sort",
+									"value": "createdAt,desc"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "admin",
+			"item": [
+				{
+					"name": "전체 통계 조회",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/statistics",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"statistics"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "사용자 목록",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/users?page=0&size=20&sort=createdAt,desc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"users"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "sort",
+									"value": "createdAt,desc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "상태별 사용자 목록",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/users/status/ACTIVE?page=0&size=20&sort=createdAt,desc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"users",
+								"status",
+								"ACTIVE"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "sort",
+									"value": "createdAt,desc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "사용자 상세 조회",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/users/{{userId}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"users",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "사용자 정보 수정",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"nickname\": \"관리자가수정\",\r\n  \"role\": \"ROLE_USER\",\r\n  \"status\": \"ACTIVE\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/users/{{userId}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"users",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "사용자 정지",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/users/{{userId}}/suspend",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"users",
+								"{{userId}}",
+								"suspend"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "사용자 정지 해제",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/users/{{userId}}/activate",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"users",
+								"{{userId}}",
+								"activate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "사용자 강제 삭제",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/users/{{userId}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"users",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "에러케이스 테스트",
+			"item": [
+				{
+					"name": "틀린 비밀번호로 로그인 시도",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"admin@blog.com\",\r\n  \"password\": \"wrong_password\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "health",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/health",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					"// baseUrl 자동 주입 (혹시 누락 방지)\r",
+					"if (!pm.environment.get(\"baseUrl\")) {\r",
+					"    pm.environment.set(\"baseUrl\", \"http://localhost:8080\");\r",
+					"}\r",
+					"\r",
+					"// accessToken이 있으면 Authorization 자동 세팅\r",
+					"const token = pm.environment.get(\"accessToken\");\r",
+					"if (token) {\r",
+					"    pm.request.headers.upsert({\r",
+					"        key: \"Authorization\",\r",
+					"        value: `Bearer ${token}`\r",
+					"    });\r",
+					"}\r",
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": ""
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "refreshToken",
+			"value": ""
+		},
+		{
+			"key": "postId",
+			"value": ""
+		},
+		{
+			"key": "commentId",
+			"value": ""
+		},
+		{
+			"key": "categoryId",
+			"value": ""
+		},
+		{
+			"key": "userId",
+			"value": ""
+		},
+		{
+			"key": "email",
+			"value": ""
+		},
+		{
+			"key": "password",
+			"value": ""
+		}
+	]
+}
