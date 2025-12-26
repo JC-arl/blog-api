@@ -4,6 +4,8 @@ import com.wsd.blogapi.auth.dto.LoginRequest;
 import com.wsd.blogapi.auth.dto.RefreshRequest;
 import com.wsd.blogapi.auth.dto.SignupRequest;
 import com.wsd.blogapi.auth.dto.TokenResponse;
+import com.wsd.blogapi.auth.dto.UpdateProfileRequest;
+import com.wsd.blogapi.auth.dto.UserResponse;
 import com.wsd.blogapi.common.error.ErrorCode;
 import com.wsd.blogapi.user.User;
 import com.wsd.blogapi.user.UserRepository;
@@ -100,5 +102,23 @@ public class AuthService {
         redisTokenService.saveRefreshToken(user.getId(), refresh);
 
         return new TokenResponse(access, refresh);
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponse getMe(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException(ErrorCode.USER_NOT_FOUND.getCode()));
+        return new UserResponse(user);
+    }
+
+    @Transactional
+    public UserResponse updateProfile(Long userId, UpdateProfileRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException(ErrorCode.USER_NOT_FOUND.getCode()));
+
+        user.updateNickname(request.getNickname());
+        userRepository.save(user);
+
+        return new UserResponse(user);
     }
 }
