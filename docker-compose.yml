@@ -43,10 +43,9 @@ services:
       - blog-network
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${DOCKER_IMAGE:-ghcr.io/YOUR_GITHUB_USERNAME/blog-api:latest}
     container_name: blog-api
+    pull_policy: always
     restart: unless-stopped
     depends_on:
       mysql:
