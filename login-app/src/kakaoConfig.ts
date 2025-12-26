@@ -1,7 +1,8 @@
 // Kakao REST API 직접 사용 방식
 const KAKAO_REST_API_KEY = process.env.REACT_APP_KAKAO_REST_API_KEY;
-// 개발/운영 모두 8080 포트 사용 (Spring Boot에서 React 빌드 서빙)
-const KAKAO_REDIRECT_URI = 'http://localhost:8080/oauth/kakao/callback';
+// 환경변수에서 백엔드 URL 가져오기, 없으면 현재 origin 사용
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || window.location.origin;
+const KAKAO_REDIRECT_URI = `${BACKEND_URL}/oauth/kakao/callback`;
 
 // 카카오 로그인 - 팝업 방식
 export const kakaoLogin = (): Promise<string> => {

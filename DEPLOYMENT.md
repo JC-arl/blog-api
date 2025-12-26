@@ -92,11 +92,16 @@ FIREBASE_PROJECT_ID=your-firebase-project-id
 
 # Kakao 설정
 KAKAO_REST_API_KEY=your-kakao-rest-api-key
+REACT_APP_KAKAO_REST_API_KEY=your-kakao-rest-api-key
+
+# React 앱 설정 (카카오 리다이렉트 URI 등에 사용)
+REACT_APP_BACKEND_URL=http://113.198.66.68
 ```
 
 **중요**:
 - `PUBLISHED_URL`에 서버의 공인 IP 주소나 도메인을 설정하세요
 - `FRONTEND_URL`, `BACKEND_URL`, `CORS_ALLOWED_ORIGINS`에 자동으로 반영됩니다
+- `REACT_APP_BACKEND_URL`을 설정하여 카카오 로그인 리다이렉트 URI가 자동으로 반영됩니다
 - 보안을 위해 비밀번호와 키는 반드시 변경하세요
 
 #### 3-2. GHCR 로그인 (최초 1회)
@@ -175,7 +180,31 @@ Google Cloud Console에서도 설정이 필요할 수 있습니다:
    - `http://113.198.66.68/__/auth/handler`
    - `http://113.198.66.68`
 
-#### 3-5. 컨테이너 실행
+#### 3-5. Kakao 개발자 콘솔 설정
+
+**중요:** 카카오 로그인을 사용하려면 Kakao Developers 콘솔에서 리다이렉트 URI를 등록해야 합니다.
+
+**설정 방법:**
+
+1. [Kakao Developers](https://developers.kakao.com/console/app) 접속
+2. 앱 선택 (또는 새 앱 생성)
+3. **제품 설정** → **카카오 로그인**
+4. **Redirect URI** 설정:
+   - `http://localhost:8080/oauth/kakao/callback` (로컬 개발)
+   - `http://113.198.66.68/oauth/kakao/callback` (프로덕션 서버)
+5. **활성화 설정** 상태를 ON으로 변경
+6. 저장
+
+**추가 설정 (필요 시):**
+- **동의 항목**: 프로필 정보(닉네임) 수집 권한 활성화
+- **Web 플랫폼 등록**: 사이트 도메인 `http://113.198.66.68` 추가
+
+**환경변수 확인:**
+- `.env` 파일의 `REACT_APP_BACKEND_URL`이 올바르게 설정되었는지 확인
+- 로컬: `http://localhost:8080`
+- 프로덕션: `http://113.198.66.68`
+
+#### 3-6. 컨테이너 실행
 
 ```bash
 # 최신 이미지 pull 및 실행
