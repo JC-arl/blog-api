@@ -199,7 +199,7 @@ blog-api/
 
 - [개발 명세서 (dev.md)](./dev.md)
 - [Swagger 사용 가이드 (SWAGGER_GUIDE.md)](./SWAGGER_GUIDE.md)
-- [비밀번호 정보 (bcrypt-passwords.md)](./bcrypt-passwords.md)
+
 
 ## 라이센스
 
