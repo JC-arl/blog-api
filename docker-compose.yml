@@ -57,7 +57,6 @@ services:
         REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL}
     image: ${DOCKER_IMAGE:-ghcr.io/YOUR_GITHUB_USERNAME/blog-api:latest}
     container_name: blog-api
-    pull_policy: always
     restart: unless-stopped
     depends_on:
       mysql:
