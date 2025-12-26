@@ -2,16 +2,47 @@
 # Multi-stage build for Blog API
 # ========================================
 
-# Stage 1: Build stage
-FROM gradle:8.5-jdk21 AS builder
+# Stage 1: Frontend build
+FROM node:20-alpine AS frontend
+
+WORKDIR /login-app
+
+# Build arguments for React environment variables
+ARG REACT_APP_FIREBASE_API_KEY
+ARG REACT_APP_FIREBASE_AUTH_DOMAIN
+ARG REACT_APP_FIREBASE_PROJECT_ID
+ARG REACT_APP_FIREBASE_STORAGE_BUCKET
+ARG REACT_APP_FIREBASE_MESSAGING_SENDER_ID
+ARG REACT_APP_FIREBASE_APP_ID
+ARG REACT_APP_KAKAO_REST_API_KEY
+ARG REACT_APP_BACKEND_URL
+
+# Set environment variables for React build
+ENV REACT_APP_FIREBASE_API_KEY=$REACT_APP_FIREBASE_API_KEY \
+    REACT_APP_FIREBASE_AUTH_DOMAIN=$REACT_APP_FIREBASE_AUTH_DOMAIN \
+    REACT_APP_FIREBASE_PROJECT_ID=$REACT_APP_FIREBASE_PROJECT_ID \
+    REACT_APP_FIREBASE_STORAGE_BUCKET=$REACT_APP_FIREBASE_STORAGE_BUCKET \
+    REACT_APP_FIREBASE_MESSAGING_SENDER_ID=$REACT_APP_FIREBASE_MESSAGING_SENDER_ID \
+    REACT_APP_FIREBASE_APP_ID=$REACT_APP_FIREBASE_APP_ID \
+    REACT_APP_KAKAO_REST_API_KEY=$REACT_APP_KAKAO_REST_API_KEY \
+    REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
+
+# Copy package files
+COPY login-app/package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY login-app/ ./
+
+# Build React app
+RUN npm run build
+
+# Stage 2: Backend build
+FROM gradle:8.5-jdk21 AS backend
 
 WORKDIR /app
-
-# Install Node.js and npm for React build
-RUN apt-get update && apt-get install -y curl && \
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy gradle files for dependency caching
 COPY build.gradle settings.gradle gradlew ./
@@ -23,13 +54,16 @@ RUN gradle dependencies --no-daemon || true
 # Copy source code
 COPY src ./src
 
-# Copy React frontend
-COPY login-app ./login-app
+# Copy React app structure (for Gradle compatibility)
+COPY login-app/package*.json ./login-app/
 
-# Build the application including React frontend
-RUN gradle clean bootJar -x test --no-daemon
+# Copy React build from frontend stage
+COPY --from=frontend /login-app/build ./login-app/build
 
-# Stage 2: Runtime stage
+# Build Spring Boot application (skip npm install and React build)
+RUN gradle clean bootJar -x test -x npmInstall -x buildReact --no-daemon
+
+# Stage 3: Runtime stage
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
@@ -37,8 +71,8 @@ WORKDIR /app
 # Create non-root user for security
 RUN addgroup -S spring && adduser -S spring -G spring
 
-# Copy built jar from builder stage
-COPY --from=builder /app/build/libs/*.jar app.jar
+# Copy built jar from backend stage
+COPY --from=backend /app/build/libs/*.jar app.jar
 
 # Note: Firebase service account file is mounted via docker-compose.yml volume
 # from secrets/firebase-service-account.json to /app/firebase-service-account.json
