@@ -43,7 +43,7 @@ spring:
 # Firebase 설정
 firebase:
   project-id: ${FIREBASE_PROJECT_ID}
-  service-account-path: ${FIREBASE_SERVICE_ACCOUNT_PATH}
+  service-account-path: ./secrets/firebase_service_account.json
 
 # Kakao 설정
 kakao:
