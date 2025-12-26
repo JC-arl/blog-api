@@ -10,6 +10,7 @@
 - [5. 카테고리 (Categories)](#5-카테고리-categories)
 - [6. 관리자 (Admin)](#6-관리자-admin)
 - [7. 헬스체크 (Health)](#7-헬스체크-health)
+- [8. 에러 케이스 테스트](#8-에러-케이스-테스트)
 
 ---
 
@@ -543,6 +544,376 @@ pm.environment.set("categoryId", json.id);
   "buildTime": "2025-01-15T10:30:00Z",
   "timestamp": "2025-01-15T15:45:00Z"
 }
+```
+
+---
+
+## 8. 에러 케이스 테스트
+
+> **중요**: Postman 테스트 시 각 대표 에러케이스를 실제로 검증하는 요청들입니다.
+
+### 8.1 인증 오류 (401 Unauthorized)
+
+#### 8.1.1 토큰 없이 인증 필요 엔드포인트 호출
+- **Method**: `POST`
+- **URL**: `{{baseUrl}}/posts`
+- **Headers**: Authorization 헤더 없음
+- **Request Body**:
+```json
+{
+  "title": "테스트 게시글",
+  "content": "내용",
+  "categoryId": 1
+}
+```
+- **Expected Response**: `401 Unauthorized`
+```json
+{
+  "timestamp": "2025-01-15T15:45:00Z",
+  "status": 401,
+  "error": "Unauthorized",
+  "message": "인증이 필요합니다",
+  "path": "/posts"
+}
+```
+
+#### 8.1.2 잘못된 토큰으로 API 호출
+- **Method**: `POST`
+- **URL**: `{{baseUrl}}/posts/{{postId}}/comments`
+- **Headers**:
+  - `Authorization: Bearer invalid_token_here`
+- **Request Body**:
+```json
+{
+  "content": "댓글 내용"
+}
+```
+- **Expected Response**: `401 Unauthorized`
+
+#### 8.1.3 틀린 비밀번호로 로그인 시도
+- **Method**: `POST`
+- **URL**: `{{baseUrl}}/auth/login`
+- **Request Body**:
+```json
+{
+  "email": "admin@blog.com",
+  "password": "wrong_password"
+}
+```
+- **Expected Response**: `401 Unauthorized`
+```json
+{
+  "timestamp": "2025-01-15T15:45:00Z",
+  "status": 401,
+  "error": "Unauthorized",
+  "message": "이메일 또는 비밀번호가 올바르지 않습니다",
+  "path": "/auth/login"
+}
+```
+
+#### 8.1.4 존재하지 않는 이메일로 로그인 시도
+- **Method**: `POST`
+- **URL**: `{{baseUrl}}/auth/login`
+- **Request Body**:
+```json
+{
+  "email": "nonexistent@example.com",
+  "password": "password123"
+}
+```
+- **Expected Response**: `401 Unauthorized`
+
+### 8.2 권한 오류 (403 Forbidden)
+
+#### 8.2.1 일반 사용자가 관리자 전용 카테고리 생성 시도
+- **Method**: `POST`
+- **URL**: `{{baseUrl}}/categories`
+- **Headers**:
+  - `Authorization: Bearer {{accessToken}}` (일반 사용자 토큰)
+- **Request Body**:
+```json
+{
+  "name": "새 카테고리",
+  "slug": "new-category",
+  "description": "설명"
+}
+```
+- **Expected Response**: `403 Forbidden`
+```json
+{
+  "timestamp": "2025-01-15T15:45:00Z",
+  "status": 403,
+  "error": "Forbidden",
+  "message": "접근 권한이 없습니다",
+  "path": "/categories"
+}
+```
+
+#### 8.2.2 다른 사용자의 게시글 수정 시도
+- **Method**: `PUT`
+- **URL**: `{{baseUrl}}/posts/{{postId}}`
+- **Headers**:
+  - `Authorization: Bearer {{accessToken}}` (작성자가 아닌 다른 사용자 토큰)
+- **Request Body**:
+```json
+{
+  "title": "수정 시도",
+  "content": "내용",
+  "categoryId": 1
+}
+```
+- **Expected Response**: `403 Forbidden`
+
+#### 8.2.3 일반 사용자가 사용자 목록 조회 시도
+- **Method**: `GET`
+- **URL**: `{{baseUrl}}/admin/users`
+- **Headers**:
+  - `Authorization: Bearer {{accessToken}}` (일반 사용자 토큰)
+- **Expected Response**: `403 Forbidden`
+
+### 8.3 잘못된 요청 (400 Bad Request)
+
+#### 8.3.1 필수 필드 누락 - 제목 없이 게시글 작성
+- **Method**: `POST`
+- **URL**: `{{baseUrl}}/posts`
+- **Headers**:
+  - `Authorization: Bearer {{accessToken}}`
+- **Request Body**:
+```json
+{
+  "content": "내용만 있고 제목이 없음",
+  "categoryId": 1
+}
+```
+- **Expected Response**: `400 Bad Request`
+```json
+{
+  "timestamp": "2025-01-15T15:45:00Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "제목은 필수입니다",
+  "path": "/posts"
+}
+```
+
+#### 8.3.2 이메일 형식 오류로 회원가입 시도
+- **Method**: `POST`
+- **URL**: `{{baseUrl}}/auth/signup`
+- **Request Body**:
+```json
+{
+  "email": "invalid-email-format",
+  "password": "password123",
+  "nickname": "테스트"
+}
+```
+- **Expected Response**: `400 Bad Request`
+```json
+{
+  "timestamp": "2025-01-15T15:45:00Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "올바른 이메일 형식이 아닙니다",
+  "path": "/auth/signup"
+}
+```
+
+#### 8.3.3 이미 존재하는 이메일로 회원가입 시도
+- **Method**: `POST`
+- **URL**: `{{baseUrl}}/auth/signup`
+- **Request Body**:
+```json
+{
+  "email": "admin@blog.com",
+  "password": "password123",
+  "nickname": "테스트"
+}
+```
+- **Expected Response**: `400 Bad Request`
+```json
+{
+  "timestamp": "2025-01-15T15:45:00Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "이미 사용 중인 이메일입니다",
+  "path": "/auth/signup"
+}
+```
+
+#### 8.3.4 빈 내용으로 댓글 작성 시도
+- **Method**: `POST`
+- **URL**: `{{baseUrl}}/posts/{{postId}}/comments`
+- **Headers**:
+  - `Authorization: Bearer {{accessToken}}`
+- **Request Body**:
+```json
+{
+  "content": ""
+}
+```
+- **Expected Response**: `400 Bad Request`
+
+#### 8.3.5 유효하지 않은 Refresh Token으로 토큰 갱신 시도
+- **Method**: `POST`
+- **URL**: `{{baseUrl}}/auth/refresh`
+- **Request Body**:
+```json
+{
+  "refreshToken": "invalid_or_expired_refresh_token"
+}
+```
+- **Expected Response**: `400 Bad Request`
+
+### 8.4 리소스 없음 (404 Not Found)
+
+#### 8.4.1 존재하지 않는 게시글 조회
+- **Method**: `GET`
+- **URL**: `{{baseUrl}}/posts/99999`
+- **Expected Response**: `404 Not Found`
+```json
+{
+  "timestamp": "2025-01-15T15:45:00Z",
+  "status": 404,
+  "error": "Not Found",
+  "message": "게시글을 찾을 수 없습니다",
+  "path": "/posts/99999"
+}
+```
+
+#### 8.4.2 존재하지 않는 카테고리로 게시글 작성
+- **Method**: `POST`
+- **URL**: `{{baseUrl}}/posts`
+- **Headers**:
+  - `Authorization: Bearer {{accessToken}}`
+- **Request Body**:
+```json
+{
+  "title": "테스트 게시글",
+  "content": "내용",
+  "categoryId": 99999
+}
+```
+- **Expected Response**: `404 Not Found`
+```json
+{
+  "timestamp": "2025-01-15T15:45:00Z",
+  "status": 404,
+  "error": "Not Found",
+  "message": "카테고리를 찾을 수 없습니다",
+  "path": "/posts"
+}
+```
+
+#### 8.4.3 존재하지 않는 댓글 수정 시도
+- **Method**: `PUT`
+- **URL**: `{{baseUrl}}/comments/99999`
+- **Headers**:
+  - `Authorization: Bearer {{accessToken}}`
+- **Request Body**:
+```json
+{
+  "content": "수정된 내용"
+}
+```
+- **Expected Response**: `404 Not Found`
+
+#### 8.4.4 존재하지 않는 카테고리 조회 (Slug)
+- **Method**: `GET`
+- **URL**: `{{baseUrl}}/categories/slug/nonexistent-category`
+- **Expected Response**: `404 Not Found`
+
+#### 8.4.5 존재하지 않는 사용자 조회 (관리자)
+- **Method**: `GET`
+- **URL**: `{{baseUrl}}/admin/users/99999`
+- **Headers**:
+  - `Authorization: Bearer {{accessToken}}` (관리자 토큰)
+- **Expected Response**: `404 Not Found`
+
+### 8.5 에러 케이스 테스트 체크리스트
+
+Postman에서 다음 에러 케이스들을 모두 테스트하여 올바른 에러 응답이 반환되는지 확인하세요:
+
+- [ ] **401 Unauthorized (4개)**
+  - [ ] 토큰 없이 게시글 작성
+  - [ ] 잘못된 토큰으로 댓글 작성
+  - [ ] 틀린 비밀번호로 로그인
+  - [ ] 존재하지 않는 이메일로 로그인
+
+- [ ] **403 Forbidden (3개)**
+  - [ ] 일반 사용자가 카테고리 생성
+  - [ ] 다른 사용자의 게시글 수정
+  - [ ] 일반 사용자가 관리자 엔드포인트 호출
+
+- [ ] **400 Bad Request (5개)**
+  - [ ] 필수 필드 누락 (제목 없이 게시글 작성)
+  - [ ] 이메일 형식 오류로 회원가입
+  - [ ] 중복 이메일로 회원가입
+  - [ ] 빈 내용으로 댓글 작성
+  - [ ] 유효하지 않은 Refresh Token
+
+- [ ] **404 Not Found (5개)**
+  - [ ] 존재하지 않는 게시글 조회
+  - [ ] 존재하지 않는 카테고리로 게시글 작성
+  - [ ] 존재하지 않는 댓글 수정
+  - [ ] 존재하지 않는 카테고리 조회 (Slug)
+  - [ ] 존재하지 않는 사용자 조회
+
+**총 17개의 에러 케이스 테스트 항목**
+
+### 8.6 Postman Tests 스크립트 (에러 검증용)
+
+각 에러 케이스 요청의 **Tests** 탭에 다음과 같은 스크립트를 추가하여 자동 검증할 수 있습니다:
+
+#### 401 에러 검증
+```javascript
+pm.test("Status code is 401", function () {
+    pm.response.to.have.status(401);
+});
+
+pm.test("Error message exists", function () {
+    const json = pm.response.json();
+    pm.expect(json).to.have.property('error');
+    pm.expect(json.error).to.eql('Unauthorized');
+});
+```
+
+#### 403 에러 검증
+```javascript
+pm.test("Status code is 403", function () {
+    pm.response.to.have.status(403);
+});
+
+pm.test("Error message exists", function () {
+    const json = pm.response.json();
+    pm.expect(json).to.have.property('error');
+    pm.expect(json.error).to.eql('Forbidden');
+});
+```
+
+#### 400 에러 검증
+```javascript
+pm.test("Status code is 400", function () {
+    pm.response.to.have.status(400);
+});
+
+pm.test("Error message exists", function () {
+    const json = pm.response.json();
+    pm.expect(json).to.have.property('error');
+    pm.expect(json.error).to.eql('Bad Request');
+});
+```
+
+#### 404 에러 검증
+```javascript
+pm.test("Status code is 404", function () {
+    pm.response.to.have.status(404);
+});
+
+pm.test("Error message exists", function () {
+    const json = pm.response.json();
+    pm.expect(json).to.have.property('error');
+    pm.expect(json.error).to.eql('Not Found');
+});
 ```
 
 ---

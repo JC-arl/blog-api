@@ -159,12 +159,12 @@ HTTP 요청/응답 처리, DTO 변환
 
 | Controller | 경로 | 주요 기능 |
 |-----------|------|----------|
-| AuthController | /auth/* | 로그인, 회원가입, Firebase, Kakao |
-| PostController | /posts/* | 게시글 CRUD, 조회수 |
+| AuthController | /auth/* | 로그인, 회원가입, Firebase, Kakao, 프로필 조회/수정 |
+| PostController | /posts/* | 게시글 CRUD, 조회수, 검색 |
 | CommentController | /posts/{id}/comments | 댓글 CRUD |
-| PostLikeController | /posts/{id}/likes | 좋아요 추가/취소 |
+| PostLikeController | /posts/{id}/likes | 좋아요 추가/취소/토글 |
 | CategoryController | /categories | 카테고리 관리 |
-| AdminController | /admin/* | 관리자 기능 |
+| AdminController | /admin/* | 관리자 기능 (사용자, 게시글, 댓글 관리) |
 | HealthController | /health | 헬스체크 |
 
 **HW1 대비 변경**:
@@ -186,10 +186,10 @@ HTTP 요청/응답 처리, DTO 변환
 
 | Service | 주요 로직 |
 |---------|----------|
-| **AuthService** | • 회원가입 (BCrypt 해싱)<br>• 로그인 (JWT 발급)<br>• Firebase ID Token 검증<br>• Kakao OAuth 토큰 교환<br>• Refresh Token 갱신<br>• 로그아웃 (블랙리스트 등록) |
-| **PostService** | • 게시글 CRUD<br>• 조회수 증가 (비관적 락 또는 비동기)<br>• 페이지네이션<br>• 카테고리별 필터링 |
-| **CommentService** | • 댓글 작성/수정/삭제<br>• 게시글별 댓글 조회<br>• 소유권 검증 |
-| **PostLikeService** | • 좋아요 추가/취소 (토글)<br>• 중복 방지 (UNIQUE 제약)<br>• 좋아요 수 집계 |
+| **AuthService** | • 회원가입 (BCrypt 해싱)<br>• 로그인 (JWT 발급)<br>• Firebase ID Token 검증<br>• Kakao OAuth 토큰 교환<br>• Refresh Token 갱신<br>• 로그아웃 (블랙리스트 등록)<br>• 프로필 조회/수정 |
+| **PostService** | • 게시글 CRUD<br>• 조회수 증가 (비관적 락 또는 비동기)<br>• 페이지네이션<br>• 카테고리별 필터링<br>• 키워드 검색<br>• 게시글 상태 변경 |
+| **CommentService** | • 댓글 작성/수정/삭제<br>• 게시글별 댓글 조회<br>• 소유권 검증<br>• 대댓글 지원 |
+| **PostLikeService** | • 좋아요 추가/취소/토글<br>• 중복 방지 (UNIQUE 제약)<br>• 좋아요 수 집계<br>• 좋아요 여부 확인 |
 | **CategoryService** | • 카테고리 CRUD<br>• Slug 자동 생성 |
 
 **HW1 대비 변경**:
@@ -524,6 +524,7 @@ localhost:3000, localhost:8080, localhost:9090
 localhost:3000 (React Dev Server)
 localhost:8080 (Local Spring Boot)
 113.198.66.68 (Production Server)
+REACT_APP_BACKEND_URL (동적 설정 - 카카오 리다이렉트 URI 반영)
 ```
 
 ### 레이트 리미팅 (HW1과 동일)
@@ -653,7 +654,12 @@ services:
       - KAKAO_REST_API_KEY=${KAKAO_REST_API_KEY}
     volumes:
       - ./secrets/firebase-service-account.json:/app/firebase-service-account.json:ro
-    healthcheck: wget http://localhost:${APP_PORT}/health
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:${APP_PORT}/health || exit 1
+      interval: 30s
+      timeout: 3s
+      start_period: 60s
+      retries: 3
 
 volumes:
   mysql_data:
@@ -674,13 +680,45 @@ networks:
 ### Dockerfile 구조 (Multi-stage Build)
 
 ```dockerfile
-# Stage 1: Build stage
-FROM gradle:8.5-jdk21 AS builder
+# ========================================
+# Stage 1: Frontend build (React)
+# ========================================
+FROM node:20-alpine AS frontend
 
-# Install Node.js 20 for React build
-RUN apt-get update && \
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs
+WORKDIR /login-app
+
+# Build arguments for React environment variables
+ARG REACT_APP_FIREBASE_API_KEY
+ARG REACT_APP_FIREBASE_AUTH_DOMAIN
+ARG REACT_APP_FIREBASE_PROJECT_ID
+ARG REACT_APP_FIREBASE_STORAGE_BUCKET
+ARG REACT_APP_FIREBASE_MESSAGING_SENDER_ID
+ARG REACT_APP_FIREBASE_APP_ID
+ARG REACT_APP_KAKAO_REST_API_KEY
+ARG REACT_APP_BACKEND_URL
+
+# Set environment variables for React build
+ENV REACT_APP_FIREBASE_API_KEY=$REACT_APP_FIREBASE_API_KEY
+ENV REACT_APP_FIREBASE_AUTH_DOMAIN=$REACT_APP_FIREBASE_AUTH_DOMAIN
+ENV REACT_APP_FIREBASE_PROJECT_ID=$REACT_APP_FIREBASE_PROJECT_ID
+ENV REACT_APP_FIREBASE_STORAGE_BUCKET=$REACT_APP_FIREBASE_STORAGE_BUCKET
+ENV REACT_APP_FIREBASE_MESSAGING_SENDER_ID=$REACT_APP_FIREBASE_MESSAGING_SENDER_ID
+ENV REACT_APP_FIREBASE_APP_ID=$REACT_APP_FIREBASE_APP_ID
+ENV REACT_APP_KAKAO_REST_API_KEY=$REACT_APP_KAKAO_REST_API_KEY
+ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
+
+# Copy package files and install dependencies
+COPY login-app/package*.json ./
+RUN npm ci
+
+# Copy source code and build React app
+COPY login-app/ ./
+RUN npm run build
+
+# ========================================
+# Stage 2: Backend build (Spring Boot)
+# ========================================
+FROM gradle:8.5-jdk21 AS backend
 
 WORKDIR /app
 
@@ -691,12 +729,17 @@ RUN gradle dependencies --no-daemon || true
 
 # 소스 코드 복사
 COPY src ./src
-COPY login-app ./login-app
+COPY login-app/package*.json ./login-app/
 
-# React + Spring Boot 빌드
-RUN gradle clean bootJar -x test --no-daemon
+# Copy React build from frontend stage
+COPY --from=frontend /login-app/build ./login-app/build
 
-# Stage 2: Runtime stage
+# Spring Boot 빌드 (React build skip)
+RUN gradle clean bootJar -x test -x npmInstall -x buildReact --no-daemon
+
+# ========================================
+# Stage 3: Runtime
+# ========================================
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
@@ -705,7 +748,7 @@ WORKDIR /app
 RUN addgroup -S spring && adduser -S spring -G spring
 
 # JAR 복사
-COPY --from=builder /app/build/libs/*.jar app.jar
+COPY --from=backend /app/build/libs/*.jar app.jar
 
 # Note: Firebase 키는 docker-compose.yml volume 마운트
 # secrets/firebase-service-account.json → /app/firebase-service-account.json
@@ -715,17 +758,25 @@ USER spring
 
 EXPOSE 8080 80
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+  CMD sh -c 'wget --no-verbose --tries=1 --spider http://localhost:${APP_PORT:-8080}/health || exit 1'
+
 # JVM 최적화
-ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:InitialRAMPercentage=50.0"
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
 ```
 
 **HW1 대비 주요 변경**:
-- ✅ 추가: Node.js 20 설치 (React 빌드)
-- ✅ 추가: `login-app` 디렉토리 복사
-- ✅ 추가: React 빌드 포함 (`gradle bootJar`)
-- ✅ 변경: `EXPOSE 80` 추가
+- ✅ 추가: **Stage 1 (Frontend)** - Node.js 20 Alpine으로 React 빌드
+- ✅ 추가: **ARG/ENV** - React 환경변수 (Firebase, Kakao) 빌드 타임 주입
+- ✅ 추가: `REACT_APP_BACKEND_URL` - 카카오 리다이렉트 URI 자동 설정
+- ✅ 추가: **Stage 2 (Backend)** - Gradle로 Spring Boot 빌드
+- ✅ 추가: `COPY --from=frontend` - React build를 Spring Boot에 통합
+- ✅ 추가: **Stage 3 (Runtime)** - 최소 JRE 이미지로 실행
+- ✅ 추가: `HEALTHCHECK` - 컨테이너 헬스체크
+- ✅ 변경: `EXPOSE 80` 추가 (프로덕션 포트)
 - ✅ 제거: Firebase 키 COPY (volume 마운트로 대체)
 
 ## 성능 최적화

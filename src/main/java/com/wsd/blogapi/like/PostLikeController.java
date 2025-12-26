@@ -24,6 +24,12 @@ public class PostLikeController {
     private final PostLikeService postLikeService;
 
     @Operation(summary = "좋아요 토글", description = "게시글 좋아요/좋아요 취소")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "토글 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     @PostMapping("/posts/{postId}/like")
     @PreAuthorize("isAuthenticated()")
     public LikeToggleResponse toggleLike(
@@ -34,6 +40,12 @@ public class PostLikeController {
     }
 
     @Operation(summary = "좋아요 상태 확인", description = "사용자가 해당 게시글에 좋아요를 눌렀는지 확인")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     @GetMapping("/posts/{postId}/like/status")
     @PreAuthorize("isAuthenticated()")
     public LikeStatusResponse getLikeStatus(
@@ -44,12 +56,22 @@ public class PostLikeController {
     }
 
     @Operation(summary = "좋아요 수 조회", description = "게시글의 좋아요 수를 조회")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     @GetMapping("/posts/{postId}/like/count")
     public Long getLikeCount(@PathVariable Long postId) {
         return postLikeService.getLikeCount(postId);
     }
 
     @Operation(summary = "좋아요한 사용자 목록", description = "게시글에 좋아요를 누른 사용자 목록")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     @GetMapping("/posts/{postId}/likes")
     public Page<PostLikeResponse> getLikesByPost(
             @PathVariable Long postId,
@@ -59,6 +81,11 @@ public class PostLikeController {
     }
 
     @Operation(summary = "내가 좋아요한 게시글", description = "로그인한 사용자가 좋아요한 게시글 목록")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     @GetMapping("/likes/my")
     @PreAuthorize("isAuthenticated()")
     public Page<PostResponse> getMyLikedPosts(
