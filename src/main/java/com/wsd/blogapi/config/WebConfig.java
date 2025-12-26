@@ -14,7 +14,12 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 모든 정적 리소스를 /static/ 아래에서 찾도록 설정
+        // /static/** 요청을 /static/static/으로 매핑 (React 빌드 구조)
+        registry.addResourceHandler("/static/**")
+                .addResourceLocations("classpath:/static/static/")
+                .setCachePeriod(3600);
+
+        // 나머지 정적 리소스 (favicon, manifest 등)
         registry.addResourceHandler("/**")
                 .addResourceLocations("classpath:/static/")
                 .setCachePeriod(3600)
