@@ -2,16 +2,31 @@ package com.wsd.blogapi.auth.dto;
 
 import com.wsd.blogapi.user.User;
 import com.wsd.blogapi.user.UserRole;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
+@Schema(description = "사용자 정보 응답")
 public class UserResponse {
+    @Schema(description = "사용자 ID", example = "1")
     private Long id;
+
+    @Schema(description = "이메일", example = "user@example.com")
     private String email;
+
+    @Schema(description = "닉네임", example = "홍길동")
     private String nickname;
+
+    @Schema(description = "권한", example = "ROLE_USER")
     private UserRole role;
+
+    @Schema(description = "계정 상태", example = "ACTIVE")
     private String status;
+
+    @Schema(description = "인증 제공자", example = "LOCAL")
     private String provider;
+
+    @Schema(description = "생성일시", example = "2025-12-26T10:00:00")
     private LocalDateTime createdAt;
 
     public UserResponse(User user) {
