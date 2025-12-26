@@ -311,10 +311,9 @@ export default function LoginUI() {
                         Google로 로그인
                     </button>
 
-                    {/* 임시 비활성화: 카카오 개발자 콘솔 설정 완료 후 주석 해제 */}
-                    {/* <button className="btn secondary" onClick={handleKakaoLogin}>
+                    <button className="btn secondary" onClick={handleKakaoLogin}>
                         Kakao로 로그인
-                    </button> */}
+                    </button>
                 </div>
             </div>
         </div>
