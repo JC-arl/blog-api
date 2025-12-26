@@ -39,9 +39,8 @@ out/
 .env
 api.md
 dev.md
-req.md
-cur.md
 /login-app/node_modules
 /src/main/resources/firebase-service-account.json
 nul
 src/main/resources/static
+.claude
