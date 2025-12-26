@@ -658,41 +658,6 @@ docker compose up -d
 
 ---
 
-## 🎯 HW1 (과제1)과의 차이점
-
-### 도메인 변경
-
-| 항목 | HW1 (온라인 서점) | 현재 (블로그) |
-|------|------------------|--------------|
-| **핵심 엔티티** | Books, Orders, Cart | Posts, Comments, Likes |
-| **테이블 수** | 8개 | 5개 |
-| **API 수** | 44개 | 45개 |
-| **인증 방식** | JWT (LOCAL) | JWT + Firebase + Kakao |
-| **프론트엔드** | 없음 | React (login-app) |
-
-### 주요 변경사항
-
-**제거된 기능:**
-- ❌ 도서 관리 (Books CRUD)
-- ❌ 주문 시스템 (Orders, Order Items)
-- ❌ 장바구니 (Cart, Cart Items)
-- ❌ 찜 기능 (Favorites)
-- ❌ 재고 관리
-
-**추가된 기능:**
-- ✅ 게시글 시스템 (Posts with view count)
-- ✅ 댓글 시스템
-- ✅ 좋아요 기능 (SNS 패턴)
-- ✅ 카테고리 관리 (동적)
-- ✅ Firebase Google 로그인
-- ✅ Kakao OAuth 로그인
-- ✅ React 프론트엔드
-- ✅ GitHub Actions CI/CD
-- ✅ GHCR 이미지 레지스트리
-- ✅ 프로필 수정 (GET/PATCH /auth/me)
-
----
-
 ## 🔒 보안 기능
 
 - ✅ **JWT 인증**: Stateless 인증 (Access 15분, Refresh 14일)
@@ -713,28 +678,6 @@ docker compose up -d
 - ✅ **Redis 캐싱**: Refresh Token 저장
 - ✅ **N+1 방지**: JPA Fetch Join, EntityGraph
 - ✅ **Connection Pool**: HikariCP (기본)
-
----
-
-## 🐛 알려진 제한사항
-
-1. **파일 업로드 미지원** - 이미지 업로드 기능 없음
-2. **대댓글 미지원** - 1depth 댓글만 지원
-3. **알림 시스템 없음** - 댓글/좋아요 알림 없음
-4. **전문 검색 없음** - 단순 LIKE 검색만 지원
-5. **이메일 인증 없음** - 회원가입 시 이메일 인증 없음
-
----
-
-## 👥 기여
-
-이 프로젝트는 웹 서비스 설계 과제의 일부입니다.
-
----
-
-## 📝 라이선스
-
-MIT License
 
 ---
 
