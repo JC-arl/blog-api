@@ -1,54 +1,78 @@
 # Blog API
 
-Spring Boot 기반 블로그 백엔드 REST API 서버입니다.
-JWT + 소셜 로그인(Firebase, Kakao) 인증, Redis 캐싱, Docker 배포, Swagger 문서화를 지원합니다.
+Spring Boot 기반 블로그 플랫폼 REST API 서버입니다.
+JWT + 소셜 로그인(Firebase/Google, Kakao) 인증, Redis 캐싱, Docker 배포, Swagger 문서화를 지원합니다.
+
+**🎯 과제1(HW1) 온라인 서점 시스템을 블로그 플랫폼으로 전환**
+전자상거래 도메인(도서, 주문, 장바구니)을 콘텐츠 중심 도메인(게시글, 댓글, 좋아요)으로 재설계하였으며, Firebase와 Kakao OAuth를 통한 소셜 로그인 기능을 추가했습니다.
 
 ---
 
-## 목차
+## 📑 목차
 
 - [기술 스택](#기술-스택)
 - [배포 주소](#배포-주소)
+- [주요 기능](#주요-기능)
 - [시작하기](#시작하기)
-- [환경변수 설명](#환경변수-설명)
-- [인증 플로우](#인증-플로우)
-- [역할/권한 체계](#역할권한-체계)
 - [API 엔드포인트](#api-엔드포인트)
-- [테스트 계정](#테스트-계정)
+- [인증/인가](#인증인가)
 - [데이터베이스](#데이터베이스)
-- [성능 및 보안](#성능-및-보안)
-- [한계와 개선 계획](#한계와-개선-계획)
 - [프로젝트 구조](#프로젝트-구조)
+- [배포 가이드](#배포-가이드)
+- [문서](#문서)
 
 ---
 
-## 기술 스택
+## 🛠 기술 스택
 
+### Backend
+| 분류 | 기술 | 버전 |
+|------|------|------|
+| **Language** | Java | 21 |
+| **Framework** | Spring Boot | 3.4.1 |
+| **ORM** | Spring Data JPA | (Hibernate 6.4) |
+| **Security** | Spring Security | 6.x |
+| **Database** | MySQL | 8.0 |
+| **Cache** | Redis | 7-alpine |
+| **Migration** | Flyway | 10.20.1 |
+| **Build Tool** | Gradle | 8.5 |
+
+### Authentication & External Services
 | 분류 | 기술 |
 |------|------|
-| **Language** | Java 21 |
-| **Framework** | Spring Boot 3.4.1 |
-| **ORM** | Spring Data JPA (Hibernate) |
-| **Database** | MySQL 8.0 |
-| **Cache** | Redis 7 |
-| **Authentication** | JWT (HS256), Firebase Auth, Kakao OAuth2 |
-| **Security** | Spring Security 6, BCrypt (strength 10) |
-| **API Docs** | Swagger/OpenAPI 3.0 |
-| **Migration** | Flyway 10.20.1 |
+| **JWT** | HS256 (Access: 15min, Refresh: 14days) |
+| **Password** | BCrypt (strength 10) |
+| **Firebase** | Admin SDK 9.4.2 (Google 로그인) |
+| **Kakao** | OAuth 2.0 REST API |
+
+### Frontend
+| 분류 | 기술 | 버전 |
+|------|------|------|
+| **Framework** | React | 19.2.0 |
+| **Language** | TypeScript | 4.9.5 |
+| **Firebase** | Firebase SDK | 12.6.0 |
+| **Build** | React Scripts | 5.0.1 |
+
+### DevOps & Documentation
+| 분류 | 기술 |
+|------|------|
 | **Container** | Docker, Docker Compose |
-| **Build** | Gradle 8.5 |
+| **CI/CD** | GitHub Actions |
+| **Registry** | GHCR (GitHub Container Registry) |
+| **API Docs** | SpringDoc OpenAPI 3 (Swagger UI) |
 
 ---
 
-## 배포 주소
+## 🌐 배포 주소
 
 ### 프로덕션 환경
 
 | 항목 | URL | 설명 |
 |------|-----|------|
-| **Base URL** | `http://113.198.66.68` | API 기본 주소 |
+| **Base URL** | `http://113.198.66.68` | API 기본 주소 (포트 80) |
 | **Swagger UI** | `http://113.198.66.68/swagger-ui.html` | API 문서 및 테스트 |
 | **Health Check** | `http://113.198.66.68/health` | 서버 상태 확인 |
+| **React App** | `http://113.198.66.68` | 프론트엔드 (login-app) |
 
 ### 로컬 개발 환경
 
@@ -56,871 +80,672 @@ JWT + 소셜 로그인(Firebase, Kakao) 인증, Redis 캐싱, Docker 배포, Swa
 |------|-----|
 | **Base URL** | `http://localhost:8080` |
 | **Swagger UI** | `http://localhost:8080/swagger-ui.html` |
-| **Health Check** | `http://localhost:8080/health` |
+| **React Dev Server** | `http://localhost:3000` (npm start) |
 
 ---
 
-## 시작하기
+## ✨ 주요 기능
+
+### 1. 다중 인증 시스템 (3가지 방식)
+
+#### 로컬 인증 (Email/Password)
+- 회원가입 및 로그인
+- BCrypt 비밀번호 해싱
+- JWT Access/Refresh Token 발급
+
+#### Firebase 인증 (Google 소셜 로그인)
+- Google 계정으로 원클릭 로그인
+- Firebase ID Token 검증
+- 자동 사용자 생성
+
+#### Kakao OAuth 인증
+- Kakao 계정으로 로그인
+- Kakao Access Token → Firebase Custom Token 변환
+- 팝업 기반 OAuth 플로우
+
+### 2. 콘텐츠 관리
+
+#### 게시글 (Posts)
+- ✅ CRUD 작업 (생성, 조회, 수정, 삭제)
+- ✅ 조회수 자동 증가
+- ✅ 카테고리별 분류
+- ✅ 제목/내용 검색
+- ✅ 게시글 상태 관리 (PUBLISHED, DRAFT, DELETED)
+- ✅ Soft Delete (작성자) / Hard Delete (관리자)
+
+#### 댓글 (Comments)
+- ✅ 게시글별 댓글 작성
+- ✅ 댓글 수정/삭제
+- ✅ 작성자 본인만 수정 가능
+- ✅ 관리자 강제 삭제
+
+#### 좋아요 (Likes)
+- ✅ 게시글 좋아요/취소 토글
+- ✅ 중복 좋아요 방지
+- ✅ 좋아요 수 집계
+- ✅ 내가 좋아요한 게시글 목록
+
+#### 카테고리 (Categories)
+- ✅ 동적 카테고리 생성/수정/삭제 (관리자)
+- ✅ SEO 친화적 Slug
+- ✅ 카테고리별 게시글 필터링
+
+### 3. 사용자 관리
+
+#### 프로필
+- ✅ GET /auth/me - 내 정보 조회
+- ✅ PATCH /auth/me - 프로필 수정 (닉네임)
+- ✅ 다중 제공자 지원 (LOCAL, GOOGLE, FIREBASE, KAKAO)
+
+#### 관리자 기능
+- ✅ 전체 사용자 관리 (조회, 수정, 삭제)
+- ✅ 사용자 정지/활성화
+- ✅ 플랫폼 통계 (사용자, 게시글, 댓글, 좋아요 수)
+- ✅ 콘텐츠 강제 삭제
+
+### 4. 성능 최적화
+
+- ✅ Redis 기반 Refresh Token 저장
+- ✅ 페이지네이션 (모든 목록 조회)
+- ✅ 데이터베이스 인덱스 최적화
+- ✅ N+1 문제 방지 (JPA 최적화)
+
+### 5. 보안
+
+- ✅ JWT 기반 Stateless 인증
+- ✅ BCrypt 비밀번호 해싱
+- ✅ CORS 설정 (화이트리스트)
+- ✅ 요청 로깅 (민감 정보 마스킹)
+- ✅ Role 기반 접근 제어 (RBAC)
+- ✅ Firebase 서비스 계정 키 분리 (`secrets/` 디렉토리)
+
+---
+
+## 🚀 시작하기
 
 ### 1. 필수 요구사항
 
-- Java 21+
-- Docker & Docker Compose
-- Gradle 8.5+
+- **Java 21+**
+- **Docker & Docker Compose**
+- **Gradle 8.5+** (optional, wrapper 포함)
+- **Git**
 
-### 2. 환경 변수 설정
+### 2. 저장소 클론
 
-`.env.example` 파일을 참고하여 `.env` 파일을 생성합니다:
+```bash
+git clone https://github.com/jc-arl/blog-api.git
+cd blog-api
+```
+
+### 3. Firebase 서비스 계정 키 설정
+
+Firebase Console에서 서비스 계정 키를 다운로드하여 `secrets/` 디렉토리에 배치:
+
+```bash
+mkdir -p secrets
+# Firebase Console > Project Settings > Service Accounts > Generate new private key
+# 다운로드한 파일을 secrets/firebase-service-account.json으로 저장
+cp ~/Downloads/firebase-service-account.json secrets/
+chmod 600 secrets/firebase-service-account.json
+```
+
+### 4. 환경 변수 설정
+
+`.env.example`을 복사하여 `.env` 파일 생성:
 
 ```bash
 cp .env.example .env
 ```
 
-주요 환경변수를 설정합니다 (자세한 설명은 [환경변수 설명](#환경변수-설명) 참조):
+`.env` 파일 편집:
 
 ```properties
-# 서버 배포 주소
-PUBLISHED_URL=113.198.66.68
-APP_PORT=80
+# 로컬 개발
+APP_PORT=8080
+SPRING_PROFILES_ACTIVE=local
 
 # 데이터베이스
-MYSQL_ROOT_PASSWORD=your-secure-password
+MYSQL_ROOT_PASSWORD=your-password
 MYSQL_DATABASE=blog
 MYSQL_USER=app
-MYSQL_PASSWORD=your-secure-password
+MYSQL_PASSWORD=your-password
 
-# JWT 설정
+# JWT
 JWT_SECRET=your-super-secret-jwt-key-at-least-32-bytes-long
 
 # Firebase
 FIREBASE_PROJECT_ID=your-firebase-project-id
+FIREBASE_SERVICE_ACCOUNT_PATH=secrets/firebase-service-account.json
 
 # Kakao
 KAKAO_REST_API_KEY=your-kakao-rest-api-key
+
+# React (로컬 개발)
+REACT_APP_BACKEND_URL=http://localhost:8080
+REACT_APP_FIREBASE_API_KEY=your-firebase-api-key
+REACT_APP_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+REACT_APP_FIREBASE_PROJECT_ID=your-firebase-project-id
+# ... (나머지 Firebase 설정)
 ```
 
-### 3. Docker로 실행 (권장)
+### 5. Docker Compose로 실행
 
-#### 로컬 개발 (이미지 빌드)
+#### 로컬 개발 (소스 빌드)
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
 
-#### 프로덕션 배포 (GHCR 이미지 사용)
-
-**서버 배포 방법은 [DEPLOYMENT.md](./DEPLOYMENT.md) 참조**
-
-간단한 배포 명령어:
+#### 프로덕션 (GHCR 이미지 사용)
 
 ```bash
-# 서버에서 실행 (Docker 및 .env 설정 완료 후)
-docker compose pull
-docker compose up -d
-
-# Health 확인
-curl http://113.198.66.68/health
+docker-compose up -d
 ```
 
-**배포 전 필수 작업:**
-- ✅ `.env` 파일 작성 (환경변수 설정)
-- ✅ `secrets/firebase-service-account.json` 파일 업로드
-- ✅ Firebase Authorized domains에 서버 IP 추가
-- ✅ GitHub Actions 빌드 완료 확인
-
-자세한 내용은 [배포 가이드](./DEPLOYMENT.md)를 참조하세요.
-
-### 4. Gradle로 실행
+### 6. 서버 확인
 
 ```bash
-# 빌드
-./gradlew clean build -x test
+# Health Check
+curl http://localhost:8080/health
 
-# 실행
-./gradlew bootRun
+# Swagger UI
+open http://localhost:8080/swagger-ui.html
+```
 
-# 또는 JAR 실행
-java -jar build/libs/blog-api-0.0.1-SNAPSHOT.jar
+### 7. React 프론트엔드 개발 (선택)
+
+```bash
+cd login-app
+npm install
+npm start
+# 브라우저에서 http://localhost:3000 열림
 ```
 
 ---
 
-## 환경변수 설명
-
-`.env.example` 파일의 모든 환경변수 설명입니다.
-
-### Docker 이미지 설정
-
-| 변수명 | 설명 | 기본값 | 필수 |
-|--------|------|--------|------|
-| `DOCKER_IMAGE` | GHCR 이미지 경로 | `ghcr.io/YOUR_USERNAME/blog-api:latest` | 프로덕션 시 |
-
-### 애플리케이션 설정
-
-| 변수명 | 설명 | 기본값 | 필수 |
-|--------|------|--------|------|
-| `APP_PORT` | 서버 포트 | `80` | O |
-| `PUBLISHED_URL` | 배포 서버 주소 (IP 또는 도메인) | `113.198.66.68` | O |
-| `SPRING_PROFILES_ACTIVE` | Spring 프로파일 (`local`, `prod`) | `prod` | O |
-| `FRONTEND_URL` | 프론트엔드 URL (OAuth 리다이렉트) | `http://113.198.66.68` | O |
-| `BACKEND_URL` | 백엔드 API URL | `http://113.198.66.68` | O |
-| `CORS_ALLOWED_ORIGINS` | CORS 허용 도메인 (쉼표 구분) | `http://113.198.66.68,...` | O |
-
-### 데이터베이스 설정 (MySQL)
-
-| 변수명 | 설명 | 기본값 | 필수 |
-|--------|------|--------|------|
-| `MYSQL_ROOT_PASSWORD` | MySQL root 비밀번호 | - | O |
-| `MYSQL_DATABASE` | 데이터베이스 이름 | `blog` | O |
-| `MYSQL_USER` | 애플리케이션 DB 사용자 | `app` | O |
-| `MYSQL_PASSWORD` | 애플리케이션 DB 비밀번호 | - | O |
-| `MYSQL_PORT` | MySQL 포트 | `3306` | X |
-
-**참고:** Docker 환경에서 `MYSQL_HOST`는 자동으로 `mysql` (서비스 이름)로 설정됩니다.
-
-### JWT 설정
-
-| 변수명 | 설명 | 기본값 | 필수 |
-|--------|------|--------|------|
-| `JWT_SECRET` | JWT 서명 키 (최소 32바이트) | - | O |
-| `JWT_ACCESS_EXP` | Access Token 만료 시간 (초) | `900` (15분) | X |
-| `JWT_REFRESH_EXP` | Refresh Token 만료 시간 (초) | `1209600` (14일) | X |
-
-### Redis 설정
-
-| 변수명 | 설명 | 기본값 | 필수 |
-|--------|------|--------|------|
-| `REDIS_HOST` | Redis 호스트 | `localhost` | X |
-| `REDIS_PORT` | Redis 포트 | `6379` | X |
-
-**참고:** Docker 환경에서 `REDIS_HOST`는 자동으로 `redis` (서비스 이름)로 설정됩니다.
-
-### Firebase 설정
-
-| 변수명 | 설명 | 기본값 | 필수 |
-|--------|------|--------|------|
-| `FIREBASE_PROJECT_ID` | Firebase 프로젝트 ID | - | O |
-| `FIREBASE_SERVICE_ACCOUNT_PATH` | 서비스 계정 키 파일 경로 | `/app/firebase-service-account.json` (Docker) | X |
-
-**서비스 계정 키 파일 배치:**
-- **Docker 프로덕션**: `~/blog-api/secrets/firebase-service-account.json`에 파일 배치 (docker-compose.yml이 자동 마운트)
-- **로컬 개발**: `src/main/resources/firebase-service-account.json` 경로에 파일 배치
-- 환경변수 `FIREBASE_SERVICE_ACCOUNT_PATH`는 주석 처리 유지 (기본값 사용)
-
-**승인된 도메인 설정 (중요!):**
-
-Firebase Auth (Google 로그인 등)를 사용하려면 Firebase Console에서 도메인을 승인해야 합니다:
-
-1. [Firebase Console](https://console.firebase.google.com/) → 프로젝트 선택
-2. **Authentication** → **Settings** → **Authorized domains**
-3. **Add domain** 클릭
-4. 다음 도메인 추가:
-   - `localhost` (기본 포함)
-   - `113.198.66.68` (프로덕션 서버)
-   - `yourdomain.com` (커스텀 도메인 사용 시)
-
-**미설정 시 오류:**
-```
-Firebase: Error (auth/unauthorized-domain)
-```
-
-### Kakao OAuth 설정
-
-| 변수명 | 설명 | 기본값 | 필수 |
-|--------|------|--------|------|
-| `KAKAO_REST_API_KEY` | Kakao REST API 키 | - | O |
-
----
-
-## 인증 플로우
-
-본 API는 **3가지 인증 방식**을 지원합니다.
-
-### 1. JWT 인증 (로컬 회원가입/로그인)
-
-```
-[클라이언트]                          [서버]
-     |                                  |
-     |  POST /auth/signup               |
-     |  (email, password, nickname)     |
-     |--------------------------------->|
-     |                                  | - BCrypt로 비밀번호 해싱
-     |                                  | - User 생성 (ROLE_USER)
-     |  Access Token + Refresh Token    |
-     |<---------------------------------|
-     |                                  |
-     |  POST /auth/login                |
-     |  (email, password)               |
-     |--------------------------------->|
-     |                                  | - 비밀번호 검증
-     |                                  | - JWT 생성 (HS256)
-     |  Access Token + Refresh Token    |
-     |<---------------------------------|
-     |                                  |
-     |  API 요청                        |
-     |  Header: Authorization: Bearer {token}
-     |--------------------------------->|
-     |                                  | - JwtAuthFilter 동작
-     |                                  | - JWT 파싱 및 검증
-     |                                  | - SecurityContext 설정
-     |  응답 데이터                      |
-     |<---------------------------------|
-     |                                  |
-     |  POST /auth/refresh              |
-     |  (refreshToken)                  |
-     |--------------------------------->|
-     |                                  | - Redis에서 토큰 검증
-     |  새 Access Token                 |
-     |<---------------------------------|
-```
-
-**토큰 저장소:**
-- Access Token: 클라이언트 메모리/LocalStorage
-- Refresh Token: Redis (서버) + 클라이언트
-
-**만료 시간:**
-- Access Token: 15분 (기본값)
-- Refresh Token: 14일 (기본값)
-
-### 2. Firebase 인증
-
-```
-[클라이언트]                          [서버]
-     |                                  |
-     |  Firebase SDK로 로그인           |
-     |  (Google, Email 등)              |
-     |--------------------------------->|
-     |  Firebase ID Token               |
-     |<---------------------------------|
-     |                                  |
-     |  API 요청                        |
-     |  Header: Authorization: Bearer {firebaseIdToken}
-     |--------------------------------->|
-     |                                  | - FirebaseAuthFilter 동작
-     |                                  | - Firebase Admin SDK로 토큰 검증
-     |                                  | - User 조회 또는 자동 생성
-     |                                  | - SecurityContext 설정
-     |  응답 데이터                      |
-     |<---------------------------------|
-```
-
-**특징:**
-- Firebase ID Token을 직접 검증
-- 첫 로그인 시 User 자동 생성 (provider: FIREBASE)
-- 역할: ROLE_USER (기본값)
-
-### 3. Kakao OAuth 인증
-
-```
-[클라이언트]                          [서버]
-     |                                  |
-     |  Kakao SDK로 로그인              |
-     |--------------------------------->|
-     |  Kakao Access Token              |
-     |<---------------------------------|
-     |                                  |
-     |  POST /auth/kakao-login          |
-     |  { kakaoAccessToken }            |
-     |--------------------------------->|
-     |                                  | - Kakao API로 사용자 정보 조회
-     |                                  | - User 조회 또는 자동 생성
-     |                                  | - Firebase Custom Token 생성
-     |  Firebase Custom Token           |
-     |<---------------------------------|
-     |                                  |
-     |  Firebase SDK로 Custom Token 교환|
-     |--------------------------------->|
-     |  Firebase ID Token               |
-     |<---------------------------------|
-     |                                  |
-     |  이후 Firebase 인증 플로우 사용    |
-```
-
-**특징:**
-- Kakao Access Token → Firebase Custom Token 변환
-- 첫 로그인 시 User 자동 생성 (provider: KAKAO)
-- 이후 Firebase 인증 플로우 사용
-
-### 인증 필터 체인 순서
-
-```
-RequestLoggingFilter
-    ↓
-FirebaseAuthFilter (Firebase ID Token 검증)
-    ↓
-JwtAuthFilter (JWT Access Token 검증)
-    ↓
-UsernamePasswordAuthenticationFilter
-    ↓
-Authorization (@PreAuthorize 검증)
-```
-
----
-
-## 역할/권한 체계
-
-### 역할 종류
-
-| 역할 | 설명 | 부여 방법 |
-|------|------|-----------|
-| `ROLE_USER` | 일반 사용자 | 회원가입 시 자동 부여 |
-| `ROLE_ADMIN` | 관리자 | DB 직접 수정 또는 관리자가 승격 |
-
-### 엔드포인트별 권한 매트릭스
-
-| 엔드포인트 | Public | ROLE_USER | ROLE_ADMIN |
-|-----------|--------|-----------|------------|
-| **인증** |
-| `POST /auth/signup` | ✅ | - | - |
-| `POST /auth/login` | ✅ | - | - |
-| `POST /auth/refresh` | ✅ | - | - |
-| `POST /auth/logout` | - | ✅ | ✅ |
-| `POST /auth/kakao-login` | ✅ | - | - |
-| **게시글** |
-| `GET /posts` | ✅ | ✅ | ✅ |
-| `GET /posts/{id}` | ✅ | ✅ | ✅ |
-| `GET /posts/search` | ✅ | ✅ | ✅ |
-| `POST /posts` | - | ✅ | ✅ |
-| `PUT /posts/{id}` | - | ✅ (본인) | ✅ |
-| `DELETE /posts/{id}` | - | ✅ (본인) | ✅ |
-| `DELETE /posts/{id}/force` | - | - | ✅ |
-| `GET /posts/my` | - | ✅ | ✅ |
-| **댓글** |
-| `GET /posts/{postId}/comments` | ✅ | ✅ | ✅ |
-| `POST /posts/{postId}/comments` | - | ✅ | ✅ |
-| `PUT /comments/{id}` | - | ✅ (본인) | ✅ |
-| `DELETE /comments/{id}` | - | ✅ (본인) | ✅ |
-| `DELETE /comments/{id}/force` | - | - | ✅ |
-| `GET /comments/my` | - | ✅ | ✅ |
-| **좋아요** |
-| `POST /posts/{postId}/like` | - | ✅ | ✅ |
-| `GET /posts/{postId}/like/status` | - | ✅ | ✅ |
-| `GET /posts/{postId}/like/count` | ✅ | ✅ | ✅ |
-| `GET /posts/{postId}/likes` | ✅ | ✅ | ✅ |
-| `GET /likes/my` | - | ✅ | ✅ |
-| **카테고리** |
-| `GET /categories` | ✅ | ✅ | ✅ |
-| `GET /categories/{id}` | ✅ | ✅ | ✅ |
-| `POST /categories` | - | - | ✅ |
-| `PUT /categories/{id}` | - | - | ✅ |
-| `DELETE /categories/{id}` | - | - | ✅ |
-| **관리자** |
-| `GET /admin/statistics` | - | - | ✅ |
-| `GET /admin/users` | - | - | ✅ |
-| `PUT /admin/users/{id}` | - | - | ✅ |
-| `POST /admin/users/{id}/suspend` | - | - | ✅ |
-| `POST /admin/users/{id}/activate` | - | - | ✅ |
-| `DELETE /admin/users/{id}` | - | - | ✅ |
-| **헬스체크** |
-| `GET /health` | ✅ | ✅ | ✅ |
-
-**범례:**
-- ✅: 접근 가능
-- (본인): 본인이 작성한 콘텐츠만 수정/삭제 가능
-- `-`: 접근 불가
-
----
-
-## API 엔드포인트
+## 📡 API 엔드포인트
 
 ### 인증 (Auth)
 
-| Method | Endpoint | 설명 | 권한 |
-|--------|----------|------|------|
-| POST | `/auth/signup` | 회원가입 (이메일/비밀번호) | Public |
-| POST | `/auth/login` | 로그인 (JWT 발급) | Public |
-| POST | `/auth/refresh` | Access Token 갱신 | Public |
-| POST | `/auth/logout` | 로그아웃 (Refresh Token 무효화) | User |
-| POST | `/auth/kakao-login` | Kakao OAuth 로그인 | Public |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/auth/signup` | 회원가입 (LOCAL) | ❌ |
+| POST | `/auth/login` | 로그인 (LOCAL) | ❌ |
+| POST | `/auth/refresh` | Access Token 갱신 | ❌ |
+| POST | `/auth/logout` | 로그아웃 | ✅ JWT |
+| POST | `/auth/kakao-login` | Kakao 로그인 | ❌ |
+| GET | `/auth/me` | 내 정보 조회 | ✅ JWT |
+| PATCH | `/auth/me` | 프로필 수정 (닉네임) | ✅ JWT |
 
 ### 게시글 (Posts)
 
-| Method | Endpoint | 설명 | 권한 |
-|--------|----------|------|------|
-| GET | `/posts` | 게시글 목록 조회 (페이징) | Public |
-| GET | `/posts/{id}` | 게시글 상세 조회 (조회수 증가) | Public |
-| GET | `/posts/search` | 게시글 검색 (키워드) | Public |
-| GET | `/posts/category/{categoryId}` | 카테고리별 게시글 조회 | Public |
-| GET | `/posts/my` | 내가 작성한 게시글 목록 | User |
-| POST | `/posts` | 게시글 작성 | User |
-| PUT | `/posts/{id}` | 게시글 수정 | User (본인) |
-| DELETE | `/posts/{id}` | 게시글 삭제 (소프트 삭제) | User (본인) |
-| DELETE | `/posts/{id}/force` | 게시글 강제 삭제 | Admin |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/posts` | 게시글 작성 | ✅ JWT |
+| GET | `/posts` | 게시글 목록 (페이징) | ❌ |
+| GET | `/posts/search?keyword=검색어` | 게시글 검색 | ❌ |
+| GET | `/posts/category/{categoryId}` | 카테고리별 게시글 | ❌ |
+| GET | `/posts/{id}` | 게시글 상세 (조회수↑) | ❌ |
+| GET | `/posts/my` | 내 게시글 목록 | ✅ JWT |
+| PUT | `/posts/{id}` | 게시글 수정 | ✅ 작성자 |
+| DELETE | `/posts/{id}` | 게시글 삭제 (soft) | ✅ 작성자 |
+| DELETE | `/posts/{id}/force` | 게시글 강제 삭제 | ✅ ADMIN |
 
 ### 댓글 (Comments)
 
-| Method | Endpoint | 설명 | 권한 |
-|--------|----------|------|------|
-| GET | `/posts/{postId}/comments` | 댓글 목록 조회 (페이징) | Public |
-| GET | `/posts/{postId}/comments/count` | 댓글 수 조회 | Public |
-| GET | `/comments/{id}` | 댓글 상세 조회 | Public |
-| GET | `/comments/my` | 내가 작성한 댓글 목록 | User |
-| POST | `/posts/{postId}/comments` | 댓글 작성 | User |
-| PUT | `/comments/{id}` | 댓글 수정 | User (본인) |
-| DELETE | `/comments/{id}` | 댓글 삭제 (소프트 삭제) | User (본인) |
-| DELETE | `/comments/{id}/force` | 댓글 강제 삭제 | Admin |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/posts/{postId}/comments` | 댓글 작성 | ✅ JWT |
+| GET | `/posts/{postId}/comments` | 게시글 댓글 목록 | ❌ |
+| GET | `/posts/{postId}/comments/count` | 댓글 수 조회 | ❌ |
+| GET | `/comments/{id}` | 댓글 상세 조회 | ❌ |
+| GET | `/comments/my` | 내 댓글 목록 | ✅ JWT |
+| PUT | `/comments/{id}` | 댓글 수정 | ✅ 작성자 |
+| DELETE | `/comments/{id}` | 댓글 삭제 (soft) | ✅ 작성자 |
+| DELETE | `/comments/{id}/force` | 댓글 강제 삭제 | ✅ ADMIN |
 
 ### 좋아요 (Likes)
 
-| Method | Endpoint | 설명 | 권한 |
-|--------|----------|------|------|
-| POST | `/posts/{postId}/like` | 좋아요 토글 (추가/취소) | User |
-| GET | `/posts/{postId}/like/status` | 좋아요 여부 확인 | User |
-| GET | `/posts/{postId}/like/count` | 좋아요 수 조회 | Public |
-| GET | `/posts/{postId}/likes` | 좋아요한 사용자 목록 | Public |
-| GET | `/likes/my` | 내가 좋아요한 게시글 목록 | User |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/posts/{postId}/like` | 좋아요 토글 | ✅ JWT |
+| GET | `/posts/{postId}/like/status` | 좋아요 여부 확인 | ✅ JWT |
+| GET | `/posts/{postId}/like/count` | 좋아요 수 조회 | ❌ |
+| GET | `/posts/{postId}/likes` | 좋아요 사용자 목록 | ❌ |
+| GET | `/likes/my` | 내가 좋아요한 게시글 | ✅ JWT |
 
 ### 카테고리 (Categories)
 
-| Method | Endpoint | 설명 | 권한 |
-|--------|----------|------|------|
-| GET | `/categories` | 카테고리 목록 조회 | Public |
-| GET | `/categories/{id}` | 카테고리 상세 조회 | Public |
-| GET | `/categories/slug/{slug}` | Slug로 카테고리 조회 | Public |
-| POST | `/categories` | 카테고리 생성 | Admin |
-| PUT | `/categories/{id}` | 카테고리 수정 | Admin |
-| DELETE | `/categories/{id}` | 카테고리 삭제 | Admin |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/categories` | 카테고리 생성 | ✅ ADMIN |
+| GET | `/categories` | 카테고리 목록 | ❌ |
+| GET | `/categories/{id}` | 카테고리 상세 | ❌ |
+| GET | `/categories/slug/{slug}` | Slug로 카테고리 조회 | ❌ |
+| PUT | `/categories/{id}` | 카테고리 수정 | ✅ ADMIN |
+| DELETE | `/categories/{id}` | 카테고리 삭제 | ✅ ADMIN |
 
 ### 관리자 (Admin)
 
-| Method | Endpoint | 설명 | 권한 |
-|--------|----------|------|------|
-| GET | `/admin/statistics` | 전체 통계 조회 | Admin |
-| GET | `/admin/users` | 사용자 목록 조회 (페이징) | Admin |
-| GET | `/admin/users/status/{status}` | 상태별 사용자 조회 | Admin |
-| GET | `/admin/users/{userId}` | 사용자 상세 조회 | Admin |
-| PUT | `/admin/users/{userId}` | 사용자 정보 수정 | Admin |
-| POST | `/admin/users/{userId}/suspend` | 사용자 정지 | Admin |
-| POST | `/admin/users/{userId}/activate` | 사용자 활성화 | Admin |
-| DELETE | `/admin/users/{userId}` | 사용자 영구 삭제 | Admin |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/admin/statistics` | 플랫폼 통계 | ✅ ADMIN |
+| GET | `/admin/users` | 사용자 목록 | ✅ ADMIN |
+| GET | `/admin/users/{id}` | 사용자 상세 | ✅ ADMIN |
+| PUT | `/admin/users/{id}` | 사용자 정보 수정 | ✅ ADMIN |
+| POST | `/admin/users/{id}/suspend` | 사용자 정지 | ✅ ADMIN |
+| POST | `/admin/users/{id}/activate` | 사용자 활성화 | ✅ ADMIN |
+| DELETE | `/admin/users/{id}` | 사용자 삭제 | ✅ ADMIN |
 
-### 헬스체크 (Health)
+### 헬스체크
 
-| Method | Endpoint | 설명 | 권한 |
-|--------|----------|------|------|
-| GET | `/health` | 서버 상태 확인 (버전, 빌드 시간) | Public |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/health` | 서버 상태 확인 | ❌ |
 
-### API 문서
-
-| URL | 설명 |
-|-----|------|
-| `/swagger-ui.html` | Swagger UI (대화형 API 문서) |
-| `/v3/api-docs` | OpenAPI 3.0 JSON 스펙 |
+**총 엔드포인트 수: 45개** (HW1: 44개)
 
 ---
 
-## 테스트 계정
+## 🔐 인증/인가
 
-### 관리자 계정
+### 인증 방식 (3가지)
 
-| 항목 | 값 |
-|------|-----|
-| **이메일** | `admin@blog.com` |
-| **비밀번호** | `admin1234` |
-| **역할** | `ROLE_ADMIN` |
-| **권한** | 모든 API 접근 가능, 사용자 관리, 카테고리 관리, 강제 삭제 |
-
-**주의사항:**
-- 관리자 계정으로 사용자를 영구 삭제(`DELETE /admin/users/{id}`)하면 복구 불가능합니다.
-- 강제 삭제(`/force` 엔드포인트)는 데이터를 완전히 제거하므로 주의하세요.
-
-### 일반 사용자 계정
-
-| 항목 | 값 |
-|------|-----|
-| **이메일** | `user1@blog.com` ~ `user40@blog.com` |
-| **비밀번호** | `user1234` |
-| **역할** | `ROLE_USER` |
-| **권한** | 게시글/댓글 CRUD (본인만), 좋아요, 조회 |
-
-**사용 예시:**
-```bash
-# 로그인 요청
-curl -X POST http://113.198.66.68/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user1@blog.com",
-    "password": "user1234"
-  }'
-
-# 응답
-{
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "tokenType": "Bearer"
-}
-
-# 게시글 작성 (Access Token 사용)
-curl -X POST http://113.198.66.68/posts \
-  -H "Authorization: Bearer {accessToken}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "테스트 게시글",
-    "content": "내용입니다.",
-    "categoryId": 1
-  }'
-```
-
----
-
-## 데이터베이스
-
-### 연결 정보 (테스트/개발용)
-
-| 항목 | 값 | 권한 범위 |
-|------|-----|-----------|
-| **호스트** | `localhost` (로컬) / `mysql` (Docker) | - |
-| **포트** | `3306` | - |
-| **데이터베이스** | `blog` | - |
-| **사용자** | `app` | SELECT, INSERT, UPDATE, DELETE (blog DB만) |
-| **비밀번호** | `.env` 파일 참조 | - |
-
-**주의사항:**
-- `app` 사용자는 `blog` 데이터베이스에만 접근 가능합니다 (CREATE, DROP 권한 없음).
-- Root 계정은 보안상 애플리케이션에서 사용하지 않습니다.
-
-### 데이터베이스 스키마
-
-#### 엔티티 관계도
-
-```
-User (1) -------- (*) Post -------- (*) Comment
-  |                  |                  |
-  |                  |---- (*) PostLike |
-  |                  |                  |
-  |                  |---- (0..1) Category
-  |                  |
-  |---- (*) Comment  |
-  |                  |
-  |---- (*) PostLike |
-```
-
-#### 테이블 구조
-
-**users** (사용자)
-- Primary Key: `id`
-- Unique: `email`
-- Index: `provider` + `provider_id`
-- Fields: email, password_hash, nickname, role, status, provider, provider_id
-
-**posts** (게시글)
-- Primary Key: `id`
-- Foreign Keys: `author_id` (users), `category_id` (categories)
-- Index: `author_id`, `status`, `created_at`
-- Fields: title, content, view_count, status
-
-**comments** (댓글)
-- Primary Key: `id`
-- Foreign Keys: `post_id` (posts), `author_id` (users)
-- Index: `post_id`, `author_id`, `status`, `created_at`
-- Fields: content, status
-
-**categories** (카테고리)
-- Primary Key: `id`
-- Unique: `name`, `slug`
-- Index: `slug`
-- Fields: name, slug, description
-
-**post_likes** (좋아요)
-- Primary Key: `id`
-- Foreign Keys: `post_id` (posts), `user_id` (users)
-- Unique: `post_id` + `user_id` (중복 좋아요 방지)
-- Index: `post_id`, `user_id`, `created_at`
-
-#### 시드 데이터
-
-Flyway 마이그레이션으로 자동 생성되는 데이터:
-
-| 항목 | 개수 |
-|------|------|
-| **관리자** | 1명 (admin@blog.com) |
-| **일반 사용자** | 40명 (user1~40@blog.com) |
-| **카테고리** | 10개 (공지사항, 자유게시판, 기술블로그 등) |
-| **게시글** | 100개 (다양한 카테고리, 조회수 포함) |
-| **댓글** | 자동 생성 |
-| **좋아요** | 자동 생성 |
-
----
-
-## 성능 및 보안
-
-### 성능 최적화
-
-#### 1. 데이터베이스 인덱싱
-
-| 테이블 | 인덱스 | 목적 |
-|--------|--------|------|
-| users | `idx_users_email` | 로그인 쿼리 성능 |
-| users | `idx_users_provider` | OAuth 사용자 조회 |
-| posts | `idx_author_id`, `idx_status`, `idx_created_at` | 목록 조회, 필터링 |
-| comments | `idx_post_id`, `idx_author_id`, `idx_status` | 댓글 조회 |
-| post_likes | `uk_post_user` (UNIQUE) | 중복 좋아요 방지 + 조회 성능 |
-
-#### 2. N+1 문제 해결
-
-- JPA Fetch Join 사용 (게시글 조회 시 작성자 정보 함께 로드)
-- Lazy Loading 적용 (불필요한 연관 엔티티 로드 방지)
-
-#### 3. Redis 캐싱
-
-| 캐시 대상 | TTL | 설명 |
-|-----------|-----|------|
-| Refresh Token | 14일 | JWT 갱신용 토큰 저장 |
-
-**향후 개선 예정:**
-- 인기 게시글 캐싱
-- 카테고리 목록 캐싱
-- 사용자 프로필 캐싱
-
-### 보안 조치
-
-#### 1. 인증/인가
-
-| 항목 | 구현 방식 |
-|------|-----------|
-| **비밀번호 해싱** | BCrypt (strength 10) |
-| **JWT 알고리즘** | HS256 (HMAC SHA-256) |
-| **토큰 저장** | Refresh Token: Redis, Access Token: 클라이언트 |
-| **세션 관리** | Stateless (SessionCreationPolicy.STATELESS) |
-| **CSRF** | Disabled (stateless API) |
-
-#### 2. 보안 헤더
+#### 1. LOCAL 인증 (Email/Password)
 
 ```http
-Cross-Origin-Opener-Policy: same-origin-allow-popups
-Cross-Origin-Embedder-Policy: unsafe-none
+POST /auth/signup
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "password123",
+  "nickname": "홍길동"
+}
 ```
 
-#### 3. CORS 설정
+**응답:**
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
 
-- `.env`의 `CORS_ALLOWED_ORIGINS`로 허용 도메인 제한
-- Preflight 요청 지원
+#### 2. Firebase 인증 (Google)
 
-#### 4. 민감 정보 보호
+```
+Client → Firebase signInWithGoogle()
+      → Get Firebase ID Token
+      → POST /auth/firebase-login (idToken)
+      → Server: Verify with Firebase Admin SDK
+      → Server: Create/Find User
+      → Server: Issue JWT tokens
+```
 
-- 환경변수로 비밀 키 관리 (`.env` 파일, Git 제외)
-- 로그에서 민감 헤더 마스킹 (Authorization, Cookie, X-API-Key 등)
+#### 3. Kakao OAuth 인증
 
-#### 5. SQL Injection 방어
+```
+Client → Kakao Login Popup
+      → Redirect with authorization code
+      → POST /auth/kakao-login (kakaoAccessToken)
+      → Server: Fetch user info from Kakao API
+      → Server: Create/Find User
+      → Server: Generate Firebase Custom Token
+      → Client: Sign into Firebase with custom token
+      → Client: Use Firebase ID Token for API calls
+```
 
-- JPA/Hibernate Prepared Statement 자동 사용
-- 쿼리 파라미터 바인딩
+### JWT 토큰 사용
 
-#### 6. 사용자 상태 관리
+```http
+GET /posts/my
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
 
-| 상태 | 설명 |
+### 권한 체계
+
+| Role | 설명 | 권한 |
+|------|------|------|
+| **ROLE_USER** | 일반 사용자 | 게시글/댓글/좋아요 작성, 본인 콘텐츠 수정/삭제 |
+| **ROLE_ADMIN** | 관리자 | 모든 USER 권한 + 사용자 관리, 카테고리 관리, 강제 삭제 |
+
+### Provider 타입
+
+- `LOCAL` - 이메일/비밀번호 회원가입
+- `GOOGLE` - Google 계정 (Firebase Auth)
+- `FIREBASE` - Firebase 인증
+- `KAKAO` - Kakao 계정
+
+---
+
+## 🗄 데이터베이스
+
+### ERD
+
+```
+┌──────────────┐
+│    users     │
+│  (사용자)     │
+└──────┬───────┘
+       │ 1
+       │
+       ├─────────────────┐
+       │ N               │ N
+┌──────▼────────┐  ┌────▼──────────┐
+│    posts      │  │   comments    │
+│   (게시글)     │  │    (댓글)      │
+└──────┬────────┘  └────┬──────────┘
+       │ N              │ N
+       │                │
+┌──────▼────────┐  ┌────▼──────────┐
+│  post_likes   │  │     posts     │
+│   (좋아요)     │  │   (게시글)     │
+└───────────────┘  └───────────────┘
+
+┌──────────────┐
+│  categories  │
+│  (카테고리)   │
+└──────┬───────┘
+       │ 1
+       │ N
+┌──────▼────────┐
+│    posts      │
+│   (게시글)     │
+└───────────────┘
+```
+
+### 테이블 목록 (5개)
+
+| 테이블 | 설명 | 주요 컬럼 |
+|--------|------|----------|
+| **users** | 사용자 | id, email, nickname, role, provider |
+| **posts** | 게시글 | id, title, content, author_id, category_id, view_count |
+| **categories** | 카테고리 | id, name, slug, description |
+| **comments** | 댓글 | id, content, post_id, author_id, status |
+| **post_likes** | 좋아요 | id, post_id, user_id, created_at |
+
+### Flyway 마이그레이션
+
+| 파일 | 설명 |
 |------|------|
-| `ACTIVE` | 정상 사용자 |
-| `SUSPENDED` | 정지된 사용자 (관리자가 로그인 차단 가능) |
-
-### 현재 미구현 기능 (보안)
-
-아래 항목들은 프로덕션 환경에서 추가 구현이 필요합니다:
-
-- ❌ Rate Limiting (요청 횟수 제한)
-- ❌ XSS 방어 (입력 값 sanitization)
-- ❌ HTTPS 강제 (현재 HTTP)
-- ❌ API Key / IP 화이트리스트
-- ❌ 비밀번호 정책 (최소 길이, 복잡도 검증)
+| `V1__init_users.sql` | users 테이블 생성 |
+| `V2__seed_users.sql` | 관리자 계정 생성 (admin@blog.com) |
+| `V3__create_posts_table.sql` | posts 테이블 생성 |
+| `V4__create_categories_table.sql` | categories 테이블 생성 |
+| `V5__create_comments_table.sql` | comments 테이블 생성 |
+| `V6__create_post_likes_table.sql` | post_likes 테이블 생성 |
+| `V7__seed_data.sql` | 테스트 데이터 (카테고리 10개, 사용자 40명, 게시글 100개) |
+| `V8__seed_comments_likes.sql` | 댓글/좋아요 테스트 데이터 |
 
 ---
 
-## 한계와 개선 계획
-
-### 현재 시스템의 한계
-
-#### 1. 인증/인가
-
-| 한계 | 영향 | 우선순위 |
-|------|------|----------|
-| Rate Limiting 미구현 | 무차별 로그인 시도 공격 취약 | 높음 |
-| Access Token 강제 무효화 불가 | 로그아웃 후에도 토큰 유효 (만료까지) | 중간 |
-| 비밀번호 정책 없음 | 약한 비밀번호 허용 | 중간 |
-
-#### 2. 성능
-
-| 한계 | 영향 | 우선순위 |
-|------|------|----------|
-| 캐싱 부족 | 동일 쿼리 반복 실행 | 높음 |
-| 페이징만 지원 (커서 X) | 대용량 데이터 조회 시 성능 저하 | 낮음 |
-| 이미지 업로드 미지원 | 게시글에 이미지 첨부 불가 | 중간 |
-
-#### 3. 기능
-
-| 한계 | 영향 | 우선순위 |
-|------|------|----------|
-| 대댓글 미구현 | 댓글 depth 1 제한 | 낮음 |
-| 알림 기능 없음 | 댓글/좋아요 알림 불가 | 중간 |
-| 검색 기능 단순함 | 키워드 매칭만 지원 (형태소 분석 X) | 낮음 |
-
-#### 4. 운영
-
-| 한계 | 영향 | 우선순위 |
-|------|------|----------|
-| 로그 수집/분석 미흡 | 장애 추적 어려움 | 높음 |
-| 모니터링 부재 | 서버 상태 실시간 파악 불가 | 높음 |
-| 백업 전략 없음 | 데이터 손실 위험 | 높음 |
-
-### 개선 계획 (우선순위별)
-
-#### 우선순위: 높음
-
-1. **Rate Limiting 구현**
-   - Spring Rate Limiter (Bucket4j) 적용
-   - 엔드포인트별 요청 제한 (예: 로그인 5회/분)
-
-2. **Redis 캐싱 확대**
-   - 인기 게시글 목록 (TTL: 5분)
-   - 카테고리 목록 (TTL: 1시간)
-
-3. **모니터링 구축**
-   - Prometheus + Grafana 연동
-   - 주요 메트릭: API 응답 시간, 에러율, DB 커넥션 풀
-
-4. **로그 수집**
-   - ELK Stack (Elasticsearch, Logstash, Kibana) 또는 CloudWatch
-   - 에러 로그 알림 (Slack/Email)
-
-#### 우선순위: 중간
-
-5. **이미지 업로드**
-   - AWS S3 연동
-   - 이미지 리사이징 (썸네일 생성)
-
-6. **알림 기능**
-   - WebSocket 또는 Server-Sent Events (SSE)
-   - 댓글/좋아요 실시간 알림
-
-7. **비밀번호 정책**
-   - 최소 8자, 대소문자+숫자+특수문자 조합
-   - 비밀번호 재설정 기능 (이메일 인증)
-
-8. **Access Token Blacklist**
-   - Redis에 무효화된 토큰 저장
-   - 로그아웃 시 즉시 토큰 차단
-
-#### 우선순위: 낮음
-
-9. **대댓글 (계층형 댓글)**
-   - Comment 엔티티에 `parent_id` 추가
-   - 재귀 쿼리 또는 Closure Table 패턴
-
-10. **고급 검색**
-    - Elasticsearch 연동
-    - 형태소 분석 (nori 플러그인)
-
-11. **커서 기반 페이징**
-    - 무한 스크롤 지원
-    - 대용량 데이터 성능 개선
-
----
-
-## 프로젝트 구조
+## 📂 프로젝트 구조
 
 ```
 blog-api/
-├── .github/
-│   └── workflows/
-│       └── docker-publish.yml    # GitHub Actions CI/CD
-├── src/
-│   ├── main/
-│   │   ├── java/com/wsd/blogapi/
-│   │   │   ├── admin/            # 관리자 API
-│   │   │   │   ├── AdminController.java
-│   │   │   │   ├── AdminService.java
-│   │   │   │   └── dto/
-│   │   │   ├── auth/             # 인증/인가
-│   │   │   │   ├── AuthController.java
-│   │   │   │   ├── AuthService.java
-│   │   │   │   ├── JwtProvider.java
-│   │   │   │   ├── KakaoAuthService.java
-│   │   │   │   └── dto/
-│   │   │   ├── category/         # 카테고리
-│   │   │   │   ├── Category.java (Entity)
-│   │   │   │   ├── CategoryController.java
-│   │   │   │   ├── CategoryService.java
-│   │   │   │   └── CategoryRepository.java
-│   │   │   ├── comment/          # 댓글
-│   │   │   │   ├── Comment.java (Entity)
-│   │   │   │   ├── CommentController.java
-│   │   │   │   ├── CommentManagementController.java
-│   │   │   │   ├── CommentService.java
-│   │   │   │   └── CommentRepository.java
-│   │   │   ├── common/           # 공통 모듈
-│   │   │   │   ├── error/        # 예외 처리
-│   │   │   │   └── logging/      # 요청 로깅
-│   │   │   ├── config/           # 설정 클래스
-│   │   │   │   ├── FirebaseConfig.java
-│   │   │   │   ├── RedisConfig.java
-│   │   │   │   └── SwaggerConfig.java
-│   │   │   ├── health/           # 헬스체크
-│   │   │   │   └── HealthController.java
-│   │   │   ├── like/             # 좋아요
-│   │   │   │   ├── PostLike.java (Entity)
-│   │   │   │   ├── PostLikeController.java
-│   │   │   │   ├── PostLikeService.java
-│   │   │   │   └── PostLikeRepository.java
-│   │   │   ├── post/             # 게시글
-│   │   │   │   ├── Post.java (Entity)
-│   │   │   │   ├── PostController.java
-│   │   │   │   ├── PostService.java
-│   │   │   │   └── PostRepository.java
-│   │   │   ├── security/         # Spring Security
-│   │   │   │   ├── SecurityConfig.java
-│   │   │   │   ├── JwtAuthFilter.java
-│   │   │   │   ├── FirebaseAuthFilter.java
-│   │   │   │   └── AuthUser.java
-│   │   │   └── user/             # 사용자
-│   │   │       ├── User.java (Entity)
-│   │   │       ├── UserService.java
-│   │   │       ├── UserRepository.java
-│   │   │       └── UserRole.java (Enum)
-│   │   └── resources/
-│   │       ├── db/migration/      # Flyway SQL
-│   │       │   ├── V1__init_users.sql
-│   │       │   ├── V2__seed_users.sql
-│   │       │   ├── V3__create_posts_table.sql
-│   │       │   ├── V4__create_categories_table.sql
-│   │       │   ├── V5__create_comments_table.sql
-│   │       │   ├── V6__create_post_likes_table.sql
-│   │       │   ├── V7__seed_data.sql
-│   │       │   └── V8__seed_comments_likes.sql
-│   │       ├── static/           # React 빌드 파일
-│   │       ├── application.yml   # 공통 설정
-│   │       ├── application-local.yml  # 로컬 환경
-│   │       ├── application-prod.yml   # 프로덕션 환경
-│   │       └── firebase-service-account.json  # Firebase 키 (Git 제외)
-│   └── test/                     # 테스트 코드
-│       └── java/com/wsd/blogapi/
-├── login-app/                    # React 프론트엔드
-├── .env                          # 환경변수 (Git 제외)
-├── .env.example                  # 환경변수 템플릿
-├── .gitignore
-├── build.gradle                  # Gradle 빌드 설정
-├── docker-compose.yml            # 프로덕션용 Compose
-├── docker-compose.dev.yml        # 로컬 개발용 Compose
-├── Dockerfile                    # 멀티스테이지 빌드
-├── DEPLOYMENT.md                 # 배포 가이드
-├── README.md                     # 본 문서
-└── SWAGGER_GUIDE.md              # Swagger 사용 가이드
+├── src/main/java/com/wsd/blogapi/
+│   ├── auth/                      # 인증 도메인
+│   │   ├── AuthController.java   # 로그인, 회원가입, Firebase, Kakao
+│   │   ├── AuthService.java
+│   │   ├── KakaoAuthService.java
+│   │   ├── RedisTokenService.java
+│   │   └── dto/                   # Auth DTOs
+│   ├── user/                      # 사용자 도메인
+│   │   ├── User.java              # @Entity
+│   │   ├── UserRepository.java
+│   │   └── UserRole.java
+│   ├── post/                      # 게시글 도메인
+│   │   ├── Post.java
+│   │   ├── PostController.java
+│   │   ├── PostService.java
+│   │   └── PostRepository.java
+│   ├── comment/                   # 댓글 도메인
+│   │   ├── Comment.java
+│   │   ├── CommentController.java
+│   │   └── CommentManagementController.java
+│   ├── like/                      # 좋아요 도메인
+│   │   ├── PostLike.java
+│   │   └── PostLikeController.java
+│   ├── category/                  # 카테고리 도메인
+│   │   ├── Category.java
+│   │   └── CategoryController.java
+│   ├── admin/                     # 관리자 도메인
+│   │   ├── AdminController.java
+│   │   └── AdminService.java
+│   ├── security/                  # 보안
+│   │   ├── JwtProvider.java
+│   │   ├── JwtAuthFilter.java
+│   │   ├── FirebaseAuthFilter.java
+│   │   ├── SecurityConfig.java
+│   │   └── AuthUser.java
+│   ├── common/                    # 공통 기능
+│   │   ├── config/
+│   │   ├── error/
+│   │   └── logging/
+│   └── health/                    # 헬스체크
+│
+├── src/main/resources/
+│   ├── application.yml
+│   ├── application-local.yml
+│   ├── application-prod.yml
+│   └── db/migration/              # Flyway SQL
+│
+├── login-app/                     # React 프론트엔드
+│   ├── src/
+│   │   ├── firebaseConfig.ts
+│   │   ├── kakaoConfig.ts
+│   │   └── App.tsx
+│   ├── package.json
+│   └── public/
+│
+├── secrets/                       # Firebase 서비스 계정 키
+│   └── firebase-service-account.json
+│
+├── docs/                          # 프로젝트 문서
+│   ├── api-design.md
+│   ├── db-schema.md
+│   └── architecture.md
+│
+├── docker-compose.yml
+├── docker-compose.dev.yml
+├── Dockerfile
+├── .env.example
+└── README.md
 ```
 
 ---
 
-## 추가 문서
+## 🧪 테스트 계정
 
-- [배포 가이드 (DEPLOYMENT.md)](./DEPLOYMENT.md) - Docker, GHCR, CI/CD
-- [Swagger 사용 가이드 (SWAGGER_GUIDE.md)](./SWAGGER_GUIDE.md) - API 문서 사용법
-- [개발 명세서 (dev.md)](./dev.md) - 개발 세부 사항
+### 관리자
+
+- **Email**: `admin@blog.com`
+- **Password**: `admin1234`
+- **Role**: `ROLE_ADMIN`
+
+### 일반 사용자
+
+- **Email**: `user1@blog.com` ~ `user40@blog.com`
+- **Password**: `user1234`
+- **Role**: `ROLE_USER`
 
 ---
 
-## 라이센스
+## 📦 배포 가이드
+
+자세한 배포 가이드는 [DEPLOYMENT.md](./DEPLOYMENT.md)를 참고하세요.
+
+### 간단 배포 (GitHub Actions → GHCR)
+
+```bash
+# 1. 코드 변경 후 커밋 & 푸시
+git add .
+git commit -m "Feature: Add new feature"
+git push origin main
+
+# 2. GitHub Actions 자동 빌드 (React + Spring Boot + Docker)
+# 3. GHCR에 이미지 푸시 (ghcr.io/jc-arl/blog-api:latest)
+
+# 4. 서버에서 배포
+docker compose pull
+docker compose up -d
+```
+
+---
+
+## 📚 문서
+
+| 문서 | 설명 |
+|------|------|
+| [API 설계 문서](./docs/api-design.md) | HW1과의 API 차이점, 전체 엔드포인트 목록 |
+| [DB 스키마 문서](./docs/db-schema.md) | ERD, 테이블 상세, 인덱스 전략 |
+| [아키텍처 문서](./docs/architecture.md) | 시스템 구조, 레이어, 보안, 배포 |
+| [배포 가이드](./DEPLOYMENT.md) | 프로덕션 배포 체크리스트, 환경 설정 |
+
+---
+
+## 🔧 환경변수 설명
+
+주요 환경변수 목록입니다. 전체 목록은 `.env.example`을 참고하세요.
+
+### 서버 설정
+
+| 변수 | 설명 | 예시 |
+|------|------|------|
+| `APP_PORT` | 서버 포트 | `80` (프로덕션), `8080` (로컬) |
+| `SPRING_PROFILES_ACTIVE` | Spring Profile | `prod` 또는 `local` |
+| `PUBLISHED_URL` | 서버 공인 IP/도메인 | `113.198.66.68` |
+
+### 데이터베이스
+
+| 변수 | 설명 | 예시 |
+|------|------|------|
+| `MYSQL_HOST` | MySQL 호스트 | `mysql` (Docker), `localhost` |
+| `MYSQL_PORT` | MySQL 포트 | `3306` |
+| `MYSQL_DATABASE` | 데이터베이스 이름 | `blog` |
+| `MYSQL_USER` | MySQL 사용자 | `app` |
+| `MYSQL_PASSWORD` | MySQL 비밀번호 | `your-password` |
+
+### JWT
+
+| 변수 | 설명 | 예시 |
+|------|------|------|
+| `JWT_SECRET` | JWT 서명 키 (32자 이상) | `your-secret-key-32-bytes` |
+| `JWT_ACCESS_EXP` | Access Token 만료 시간 (초) | `900` (15분) |
+| `JWT_REFRESH_EXP` | Refresh Token 만료 시간 (초) | `1209600` (14일) |
+
+### Firebase
+
+| 변수 | 설명 | 예시 |
+|------|------|------|
+| `FIREBASE_PROJECT_ID` | Firebase 프로젝트 ID | `wsd-blogapi` |
+| `FIREBASE_SERVICE_ACCOUNT_PATH` | 서비스 계정 키 경로 | `secrets/firebase-service-account.json` |
+
+### Kakao
+
+| 변수 | 설명 | 예시 |
+|------|------|------|
+| `KAKAO_REST_API_KEY` | Kakao REST API 키 | `your-kakao-api-key` |
+
+### React (프론트엔드)
+
+| 변수 | 설명 |
+|------|------|
+| `REACT_APP_BACKEND_URL` | 백엔드 API URL |
+| `REACT_APP_FIREBASE_API_KEY` | Firebase API 키 |
+| `REACT_APP_KAKAO_REST_API_KEY` | Kakao REST API 키 |
+
+---
+
+## 🎯 HW1 (과제1)과의 차이점
+
+### 도메인 변경
+
+| 항목 | HW1 (온라인 서점) | 현재 (블로그) |
+|------|------------------|--------------|
+| **핵심 엔티티** | Books, Orders, Cart | Posts, Comments, Likes |
+| **테이블 수** | 8개 | 5개 |
+| **API 수** | 44개 | 45개 |
+| **인증 방식** | JWT (LOCAL) | JWT + Firebase + Kakao |
+| **프론트엔드** | 없음 | React (login-app) |
+
+### 주요 변경사항
+
+**제거된 기능:**
+- ❌ 도서 관리 (Books CRUD)
+- ❌ 주문 시스템 (Orders, Order Items)
+- ❌ 장바구니 (Cart, Cart Items)
+- ❌ 찜 기능 (Favorites)
+- ❌ 재고 관리
+
+**추가된 기능:**
+- ✅ 게시글 시스템 (Posts with view count)
+- ✅ 댓글 시스템
+- ✅ 좋아요 기능 (SNS 패턴)
+- ✅ 카테고리 관리 (동적)
+- ✅ Firebase Google 로그인
+- ✅ Kakao OAuth 로그인
+- ✅ React 프론트엔드
+- ✅ GitHub Actions CI/CD
+- ✅ GHCR 이미지 레지스트리
+- ✅ 프로필 수정 (GET/PATCH /auth/me)
+
+---
+
+## 🔒 보안 기능
+
+- ✅ **JWT 인증**: Stateless 인증 (Access 15분, Refresh 14일)
+- ✅ **BCrypt**: 비밀번호 해싱 (strength 10)
+- ✅ **CORS**: 화이트리스트 기반 허용
+- ✅ **Secrets 분리**: Firebase 키 별도 관리 (`secrets/`)
+- ✅ **Role 기반 권한**: `@PreAuthorize` 메서드 레벨 보안
+- ✅ **요청 로깅**: 민감 정보 마스킹 (Authorization, Cookie 등)
+- ✅ **Firebase 토큰 검증**: Admin SDK 활용
+- ✅ **Kakao OAuth**: 표준 OAuth 2.0 플로우
+
+---
+
+## 📈 성능 최적화
+
+- ✅ **페이지네이션**: Spring Data Pageable 활용
+- ✅ **인덱스**: 모든 FK, 검색 필드 인덱스
+- ✅ **Redis 캐싱**: Refresh Token 저장
+- ✅ **N+1 방지**: JPA Fetch Join, EntityGraph
+- ✅ **Connection Pool**: HikariCP (기본)
+
+---
+
+## 🐛 알려진 제한사항
+
+1. **파일 업로드 미지원** - 이미지 업로드 기능 없음
+2. **대댓글 미지원** - 1depth 댓글만 지원
+3. **알림 시스템 없음** - 댓글/좋아요 알림 없음
+4. **전문 검색 없음** - 단순 LIKE 검색만 지원
+5. **이메일 인증 없음** - 회원가입 시 이메일 인증 없음
+
+---
+
+## 👥 기여
+
+이 프로젝트는 웹 서비스 설계 과제의 일부입니다.
+
+---
+
+## 📝 라이선스
 
 MIT License
 
 ---
 
-## 문의
+## 📞 문의
 
-프로젝트 관련 문의사항은 GitHub Issues에 남겨주세요.
+- **Repository**: [https://github.com/jc-arl/blog-api](https://github.com/jc-arl/blog-api)
+- **Issues**: GitHub Issues 탭 활용
+
+---
+
+**🎓 과제 요구사항**: HW1 (온라인 서점) → HW2 (블로그 플랫폼) 전환 완료
+**🚀 배포**: GitHub Actions + GHCR + Docker Compose
+**📚 문서**: Swagger UI + 상세 .md 문서
+**🔐 인증**: JWT + Firebase + Kakao OAuth (3-way)
