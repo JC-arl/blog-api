@@ -112,19 +112,97 @@ echo YOUR_GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password
 
 퍼블릭 저장소인 경우 로그인 불필요.
 
-#### 3-3. 컨테이너 실행
+#### 3-3. Firebase 서비스 계정 키 배치
+
+**중요:** Docker 이미지에는 민감한 정보가 포함되지 않으므로, Firebase 키를 서버에 별도로 배치해야 합니다.
+
+```bash
+# secrets 디렉토리 생성
+mkdir -p ~/blog-api/secrets
+
+# Firebase 서비스 계정 키 파일 업로드
+# 방법 1: SCP로 로컬에서 서버로 전송
+scp /path/to/firebase-service-account.json user@113.198.66.68:~/blog-api/secrets/
+
+# 방법 2: 서버에서 직접 생성
+nano ~/blog-api/secrets/firebase-service-account.json
+# Firebase Console에서 다운로드한 JSON 내용 붙여넣기
+# Ctrl+O (저장), Enter, Ctrl+X (종료)
+
+# 권한 설정 (읽기 전용, 소유자만)
+chmod 600 ~/blog-api/secrets/firebase-service-account.json
+
+# 파일 확인
+ls -la ~/blog-api/secrets/
+```
+
+**파일 구조 확인:**
+```
+~/blog-api/
+├── docker-compose.yml
+├── .env
+└── secrets/
+    └── firebase-service-account.json  ← 이 파일이 있어야 함
+```
+
+#### 3-4. Firebase 승인된 도메인 설정
+
+**중요:** Google 로그인 등 Firebase Auth를 사용하려면 서버 IP/도메인을 Firebase Console에 추가해야 합니다.
+
+**설정 방법:**
+
+1. [Firebase Console](https://console.firebase.google.com/) 접속
+2. 프로젝트 선택 (`wsd-blogapi` 등)
+3. **Authentication** → **Settings** → **Authorized domains**
+4. **Add domain** 버튼 클릭
+5. 서버 IP 추가: `113.198.66.68` (또는 도메인)
+6. 저장
+
+**추가할 도메인 목록:**
+- `localhost` (기본 포함)
+- `113.198.66.68` (프로덕션 서버)
+- `yourdomain.com` (커스텀 도메인 사용 시)
+
+**Google OAuth 사용 시 추가 설정 (선택사항):**
+
+Google Cloud Console에서도 설정이 필요할 수 있습니다:
+
+1. [Google Cloud Console](https://console.cloud.google.com/) 접속
+2. Firebase 연결된 프로젝트 선택
+3. **APIs & Services** → **Credentials**
+4. OAuth 2.0 클라이언트 ID 선택
+5. **승인된 리디렉션 URI** 추가:
+   - `http://113.198.66.68/__/auth/handler`
+   - `http://113.198.66.68`
+
+#### 3-5. 컨테이너 실행
 
 ```bash
 # 최신 이미지 pull 및 실행
 docker compose pull
 docker compose up -d
 
-# 로그 확인
+# 로그 확인 (실시간)
 docker compose logs -f app
 
 # 상태 확인
 docker compose ps
+# 출력 예시:
+# NAME         STATUS          PORTS
+# blog-api     Up (healthy)    0.0.0.0:80->80/tcp
+# blog-mysql   Up (healthy)    0.0.0.0:3306->3306/tcp
+# blog-redis   Up (healthy)    0.0.0.0:6379->6379/tcp
+
+# Health 체크
+curl http://113.198.66.68/health
 ```
+
+**배포 확인:**
+
+1. **Health Check**: `curl http://113.198.66.68/health`
+2. **Swagger UI**: `http://113.198.66.68/swagger-ui.html`
+3. **API 테스트**: Swagger에서 로그인 테스트
+4. **Google 로그인**: 프론트엔드에서 Google 로그인 테스트
 
 ## 업데이트 배포
 
@@ -138,6 +216,62 @@ git push origin main
 docker compose pull      # 최신 이미지 다운로드
 docker compose up -d     # 컨테이너 재시작
 ```
+
+## 프론트엔드(React) 업데이트
+
+프론트엔드 코드를 수정한 경우:
+
+### 로컬 개발 (핫 리로드)
+
+빠른 개발을 위해 React 개발 서버 사용:
+
+```bash
+cd login-app
+npm install
+npm start
+# React 개발 서버가 localhost:3000 에서 실행 (핫 리로드 지원)
+```
+
+### 로컬에서 통합 테스트
+
+React를 빌드하여 Spring Boot와 통합 테스트:
+
+```bash
+# React 빌드 및 static 폴더로 복사
+./gradlew copyReactBuild
+
+# Spring Boot 실행
+./gradlew bootRun
+```
+
+### 프로덕션 배포
+
+프론트엔드 변경사항은 백엔드와 동일한 프로세스로 배포됩니다:
+
+```bash
+# 1. 프론트엔드 코드 수정
+# login-app/ 디렉토리의 React 코드 수정
+
+# 2. 커밋 및 푸시
+git add login-app/
+git commit -m "Update frontend: 변경 내용"
+git push origin main
+
+# 3. GitHub Actions가 자동으로:
+#    - Node.js 설치
+#    - React 빌드 (npm install && npm run build)
+#    - Spring Boot JAR에 포함
+#    - Docker 이미지 빌드 및 GHCR에 푸시
+
+# 4. 서버에서 배포
+docker compose pull
+docker compose up -d
+```
+
+**중요:**
+- Docker 빌드 과정에서 React가 자동으로 빌드됩니다
+- `login-app/build/` 디렉토리는 `.gitignore`에 포함되어 Git에 커밋되지 않습니다
+- 프로덕션 빌드는 항상 GitHub Actions를 통해 수행됩니다
 
 ## 롤백
 
@@ -226,6 +360,128 @@ docker compose config
 - `.env` 파일의 MySQL 환경변수 확인
 - `SPRING_PROFILES_ACTIVE=prod` 설정 확인
 - `MYSQL_HOST=mysql` (Docker 네트워크 이름 사용)
+
+### Firebase 인증 오류
+
+**에러: `Firebase: Error (auth/unauthorized-domain)`**
+
+**원인:** Firebase Authorized domains에 서버 IP/도메인이 추가되지 않음
+
+**해결:**
+1. [Firebase Console](https://console.firebase.google.com/) 접속
+2. Authentication → Settings → Authorized domains
+3. `113.198.66.68` 추가 후 저장
+4. 브라우저 캐시 삭제 (F12 → Application → Clear storage)
+5. 재로그인 시도
+
+**에러: `Firebase 서비스 계정 파일을 찾을 수 없습니다`**
+
+**원인:** `secrets/firebase-service-account.json` 파일이 없음
+
+**해결:**
+```bash
+# 파일 존재 확인
+ls -la ~/blog-api/secrets/firebase-service-account.json
+
+# 없다면 업로드
+scp /path/to/firebase-service-account.json user@113.198.66.68:~/blog-api/secrets/
+
+# 권한 설정
+chmod 600 ~/blog-api/secrets/firebase-service-account.json
+
+# 컨테이너 재시작
+docker compose restart app
+```
+
+### GHCR Pull 권한 오류
+
+**에러: `unauthorized: Head "https://ghcr.io/v2/.../manifests/latest": unauthorized`**
+
+**원인:** Private 저장소이거나 GitHub Actions가 아직 실행되지 않음
+
+**해결:**
+
+1. **GitHub Actions 확인**
+   ```bash
+   # https://github.com/YOUR_USERNAME/blog-api/actions
+   # 빌드가 완료되었는지 확인
+   ```
+
+2. **GHCR 로그인 (Private 저장소)**
+   ```bash
+   # GitHub Personal Access Token 생성 (read:packages 권한)
+   echo YOUR_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+   docker compose pull
+   ```
+
+3. **이미지 Public 설정**
+   ```bash
+   # GitHub → Packages → blog-api → Package settings → Public
+   ```
+
+---
+
+## 배포 체크리스트
+
+프로덕션 배포 전 확인 사항:
+
+### 로컬 준비
+
+- [ ] 코드 변경사항 커밋 및 푸시
+- [ ] GitHub Actions 빌드 성공 확인
+- [ ] GHCR에 이미지 업로드 확인
+
+### 서버 준비
+
+- [ ] `.env` 파일 작성 완료
+  - [ ] `DOCKER_IMAGE` 설정
+  - [ ] `APP_PORT` 설정 (80 권장)
+  - [ ] `PUBLISHED_URL` 설정
+  - [ ] `MYSQL_*` 설정
+  - [ ] `JWT_SECRET` 설정 (32자 이상)
+  - [ ] `FIREBASE_PROJECT_ID` 설정
+  - [ ] `KAKAO_REST_API_KEY` 설정
+
+- [ ] `secrets/firebase-service-account.json` 업로드
+  - [ ] 파일 권한 `600` 설정
+
+- [ ] Docker 및 Docker Compose 설치
+  - [ ] `docker --version` 확인
+  - [ ] `docker compose version` 확인
+
+### Firebase 설정
+
+- [ ] Firebase Authorized domains에 서버 IP 추가
+  - [ ] `113.198.66.68` (또는 도메인)
+
+- [ ] Google OAuth (사용 시)
+  - [ ] Google Cloud Console 리디렉션 URI 추가
+
+### 배포 실행
+
+- [ ] `docker compose pull` 성공
+- [ ] `docker compose up -d` 성공
+- [ ] 컨테이너 상태 확인 (`docker compose ps`)
+  - [ ] `blog-api`: healthy
+  - [ ] `blog-mysql`: healthy
+  - [ ] `blog-redis`: healthy
+
+### 배포 검증
+
+- [ ] Health Check 응답: `curl http://113.198.66.68/health`
+- [ ] Swagger UI 접속: `http://113.198.66.68/swagger-ui.html`
+- [ ] 로그인 테스트 (Swagger)
+  - [ ] 회원가입: `POST /auth/signup`
+  - [ ] 로그인: `POST /auth/login`
+
+- [ ] Google 로그인 테스트 (프론트엔드)
+  - [ ] Firebase Auth 정상 작동
+
+- [ ] API 기능 테스트
+  - [ ] 게시글 목록 조회: `GET /posts`
+  - [ ] 게시글 작성: `POST /posts` (인증 필요)
+
+---
 
 ## CI/CD 파이프라인 커스터마이징
 
