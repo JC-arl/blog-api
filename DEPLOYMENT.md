@@ -62,39 +62,79 @@ git push origin main
 ```bash
 # .env 파일
 
+# ========================================
 # Docker 이미지 설정
+# ========================================
 DOCKER_IMAGE=ghcr.io/YOUR_GITHUB_USERNAME/blog-api:latest
 
-# 서버 배포 주소 (서버의 공인 IP 또는 도메인)
+# ========================================
+# 애플리케이션 기본 설정
+# ========================================
 APP_PORT=80
 PUBLISHED_URL=113.198.66.68
 
-# URL 설정 (PUBLISHED_URL을 반영)
+# Spring 환경 (prod 사용)
+SPRING_PROFILES_ACTIVE=prod
+
+# ========================================
+# URL 설정
+# ========================================
 FRONTEND_URL=http://113.198.66.68
 BACKEND_URL=http://113.198.66.68
 CORS_ALLOWED_ORIGINS=http://113.198.66.68,http://localhost:3000,http://localhost:8080
 
-# Spring 환경
-SPRING_PROFILES_ACTIVE=prod
-
-# 데이터베이스 설정
+# ========================================
+# MySQL Database
+# ========================================
+# Docker Compose 사용시 MYSQL_HOST는 자동으로 'mysql' 서비스명으로 오버라이드됩니다
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
 MYSQL_ROOT_PASSWORD=your_secure_password
 MYSQL_DATABASE=blog
 MYSQL_USER=app
 MYSQL_PASSWORD=your_secure_password
 
+# ========================================
+# Redis
+# ========================================
+# Docker Compose 사용시 REDIS_HOST는 자동으로 'redis' 서비스명으로 오버라이드됩니다
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# ========================================
 # JWT 설정
+# ========================================
 JWT_SECRET=your-super-secret-jwt-key-at-least-32-bytes-long
+JWT_ACCESS_EXP=900         # Access Token 만료 시간 (초) - 기본 15분
+JWT_REFRESH_EXP=1209600    # Refresh Token 만료 시간 (초) - 기본 14일
 
-# Firebase 설정
+# ========================================
+# Firebase 설정 (백엔드)
+# ========================================
 FIREBASE_PROJECT_ID=your-firebase-project-id
-# Firebase 경로는 docker-compose.yml의 기본값 사용 (주석 처리 유지)
+# FIREBASE_SERVICE_ACCOUNT_PATH는 docker-compose.yml에서 자동 마운트 (주석 유지)
 
+# ========================================
+# Firebase 설정 (프론트엔드)
+# ========================================
+# Firebase Console > Project Settings > General에서 확인
+REACT_APP_FIREBASE_API_KEY=your-api-key
+REACT_APP_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com
+REACT_APP_FIREBASE_PROJECT_ID=your-project-id
+REACT_APP_FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+REACT_APP_FIREBASE_APP_ID=your-app-id
+
+# ========================================
 # Kakao 설정
+# ========================================
 KAKAO_REST_API_KEY=your-kakao-rest-api-key
 REACT_APP_KAKAO_REST_API_KEY=your-kakao-rest-api-key
 
-# React 앱 설정 (카카오 리다이렉트 URI 등에 사용)
+# ========================================
+# React 앱 설정
+# ========================================
+# 카카오 리다이렉트 URI 등에 사용되는 백엔드 URL
 REACT_APP_BACKEND_URL=http://113.198.66.68
 ```
 
@@ -102,7 +142,10 @@ REACT_APP_BACKEND_URL=http://113.198.66.68
 - `PUBLISHED_URL`에 서버의 공인 IP 주소나 도메인을 설정하세요
 - `FRONTEND_URL`, `BACKEND_URL`, `CORS_ALLOWED_ORIGINS`에 자동으로 반영됩니다
 - `REACT_APP_BACKEND_URL`을 설정하여 카카오 로그인 리다이렉트 URI가 자동으로 반영됩니다
+- **Firebase 프론트엔드 설정**: `REACT_APP_FIREBASE_*` 값들은 Firebase Console > Project Settings > General에서 확인
+- **JWT 토큰 만료 시간**: 기본값은 Access 15분, Refresh 14일이며 필요시 조정 가능
 - 보안을 위해 비밀번호와 키는 반드시 변경하세요
+- Docker Compose 사용시 `MYSQL_HOST`와 `REDIS_HOST`는 자동으로 서비스명으로 오버라이드됩니다
 
 #### 3-2. GHCR 로그인 (최초 1회)
 
@@ -466,10 +509,15 @@ docker compose restart app
   - [ ] `DOCKER_IMAGE` 설정
   - [ ] `APP_PORT` 설정 (80 권장)
   - [ ] `PUBLISHED_URL` 설정
-  - [ ] `MYSQL_*` 설정
+  - [ ] `MYSQL_*` 설정 (HOST, PORT, PASSWORD 등)
+  - [ ] `REDIS_*` 설정 (HOST, PORT)
   - [ ] `JWT_SECRET` 설정 (32자 이상)
+  - [ ] `JWT_ACCESS_EXP`, `JWT_REFRESH_EXP` 설정 (선택)
   - [ ] `FIREBASE_PROJECT_ID` 설정
+  - [ ] `REACT_APP_FIREBASE_*` 설정 (프론트엔드 Firebase)
   - [ ] `KAKAO_REST_API_KEY` 설정
+  - [ ] `REACT_APP_KAKAO_REST_API_KEY` 설정
+  - [ ] `REACT_APP_BACKEND_URL` 설정
 
 - [ ] `secrets/firebase-service-account.json` 업로드
   - [ ] 파일 권한 `600` 설정

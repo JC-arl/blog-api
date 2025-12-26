@@ -59,14 +59,11 @@ RUN gradle dependencies --no-daemon || true
 # Copy source code
 COPY src ./src
 
-# Copy React app structure (for Gradle compatibility)
-COPY login-app/package*.json ./login-app/
+# Copy React build from frontend stage directly to static resources
+COPY --from=frontend /login-app/build ./src/main/resources/static
 
-# Copy React build from frontend stage
-COPY --from=frontend /login-app/build ./login-app/build
-
-# Build Spring Boot application (skip npm install and React build)
-RUN gradle clean bootJar -x test -x npmInstall -x buildReact --no-daemon
+# Build Spring Boot application (skip npm install and React build tasks)
+RUN gradle clean bootJar -x test -x npmInstall -x buildReact -x copyReactBuild --no-daemon
 
 # Stage 3: Runtime stage
 FROM eclipse-temurin:21-jre-alpine
