@@ -82,7 +82,7 @@ JWT + 소셜 로그인(Firebase/Google, Kakao) 인증, Redis 캐싱, Docker 배�
 | 항목 | URL |
 |------|-----|
 | **Base URL** | `http://localhost:8080` |
-| **Swagger UI** | `http://localhost:8080/swagger-ui.html` |
+| **Swagger UI** | `http://113.198.66.68:18132/swagger-ui/index.html` |
 | **React Dev Server** | `http://localhost:3000` (npm start) |
 
 ---
