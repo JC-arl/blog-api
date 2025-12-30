@@ -73,7 +73,7 @@ JWT + 소셜 로그인(Firebase/Google, Kakao) 인증, Redis 캐싱, Docker 배�
 | 항목 | URL                                          | 설명 |
 |------|----------------------------------------------|------|
 | **Base URL** | `http://113.198.66.68`                       | API 기본 주소 (포트 18132) |
-| **Swagger UI** | `http://113.198.66.68:18132/swagger-ui.html` | API 문서 및 테스트 |
+| **Swagger UI** | `http://113.198.66.68:18132/swagger-ui/index.html` | API 문서 및 테스트 |
 | **Health Check** | `http://113.198.66.68:18132/health`                | 서버 상태 확인 |
 | **React App** | `http://113.198.66.68`                       | 프론트엔드 (login-app) |
 
@@ -82,7 +82,7 @@ JWT + 소셜 로그인(Firebase/Google, Kakao) 인증, Redis 캐싱, Docker 배�
 | 항목 | URL |
 |------|-----|
 | **Base URL** | `http://localhost:8080` |
-| **Swagger UI** | `http://113.198.66.68:18132/swagger-ui/index.html` |
+| **Swagger UI** | `http://locahost:8080/swagger-ui/index.html` |
 | **React Dev Server** | `http://localhost:3000` (npm start) |
 
 ---
